@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:restify/login_page.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'recaptcha_service.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -93,8 +94,22 @@ class _SignUpPageState
     });
 
     try {
+      final token = await RecaptchaService.getToken()
+        .timeout(const Duration(seconds: 10))
+        .catchError((e) {
+          print("reCAPTCHA error: $e");
+          return null;
+        });
+      if (token == null) {
+        setState(() {
+          isLoading = false;
+          generalError = "Gagal verifikasi reCAPTCHA";
+        });
+        return;
+      }
+
       final response = await http.post(
-        Uri.parse('https://pelt-womanlike-popular.ngrok-free.dev/api/register'),
+        Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/register'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -106,6 +121,7 @@ class _SignUpPageState
           'password': passwordController.text,
           'password_confirmation':
               confirmPasswordController.text,
+          'recaptcha_token': token,
         }),
       );
 

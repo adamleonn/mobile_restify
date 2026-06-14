@@ -6,6 +6,7 @@ import 'profile_page.dart';
 import 'booking_page.dart';
 import 'detail_hotel_page.dart';
 import 'favorite_page.dart';
+import 'image_utils.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -144,7 +145,7 @@ class _HomeContentState extends State<HomeContent> {
 
     try {
       final uri = Uri.parse(
-        'https://pelt-womanlike-popular.ngrok-free.dev/api/hotels',
+        'https://underwear-yeast-aching.ngrok-free.dev/api/hotels',
       ).replace(queryParameters: {'city': cityName, 'per_page': '50'});
 
       final response = await http.get(
@@ -168,9 +169,13 @@ class _HomeContentState extends State<HomeContent> {
               "city": (h["city"] ?? h["location"] ?? "").toString(),
               "name": (h["name"] ?? h["title"] ?? "").toString(),
               "address": (h["address"] ?? "").toString(),
-              "image_url":
-                  h["image_url"] ??
-                  "https://via.placeholder.com/400x300.png?text=No+Image",
+              "image_url": h["image_url"] != null
+                  ? (h["image_url"].toString().startsWith('/')
+                      ? 'https://underwear-yeast-aching.ngrok-free.dev${h["image_url"]}'
+                      : h["image_url"].toString()
+                          .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
+                          .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev"))
+                  : "https://via.placeholder.com/400x300.png?text=No+Image",
               "average_rating":
                   double.tryParse(
                     (h["average_rating"] ?? h["rating"] ?? "4.5").toString(),
@@ -1189,21 +1194,12 @@ class _HomeContentState extends State<HomeContent> {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(18),
                 ),
-                child: Image.network(
+                child: buildNetworkImage(
                   image,
-                  fit: BoxFit.cover,
                   height: 180,
                   width: double.infinity,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey.shade300,
-                      child: const Center(child: Icon(Icons.broken_image)),
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return const Center(child: CircularProgressIndicator());
-                  },
+                  fit: BoxFit.cover,
+                  fallbackHotelId: hotel["id"],
                 ),
               ),
 
@@ -1328,21 +1324,12 @@ class _HomeContentState extends State<HomeContent> {
           ClipRRect(
             borderRadius: BorderRadius.circular(22),
 
-            child: Image.network(
+            child: buildNetworkImage(
               image,
-              fit: BoxFit.cover,
               height: 180,
               width: double.infinity,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey.shade300,
-                  child: const Center(child: Icon(Icons.broken_image)),
-                );
-              },
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Center(child: CircularProgressIndicator());
-              },
+              fit: BoxFit.cover,
+              fallbackHotelId: hotel["id"],
             ),
           ),
 

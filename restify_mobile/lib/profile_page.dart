@@ -40,7 +40,7 @@ class _ProfilePageState extends State<ProfilePage> {
       }
 
       final response = await http.get(
-        Uri.parse('https://pelt-womanlike-popular.ngrok-free.dev/api/profile'),
+        Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/profile'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -105,7 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (token != null) {
         await http.post(
-          Uri.parse('https://pelt-womanlike-popular.ngrok-free.dev/api/logout'),
+          Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/logout'),
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',

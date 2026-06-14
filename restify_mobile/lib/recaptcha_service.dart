@@ -32,7 +32,7 @@ class RecaptchaService {
               // untuk menghindari race condition (onload terpanggil sebelum fungsi di-parse)
               function onRecaptchaLoad() {
                 grecaptcha.ready(function () {
-                  grecaptcha.execute('6LcIqRotAAAAAAxKFD4PXru-BAN8XL2zj-n7TAcd', {action: 'login'})
+                  grecaptcha.execute('6Le_NQktAAAAACGSaQhC9_rMYdzrbIzw1ylEbLBW', {action: 'login'})
                   .then(function(token) {
                     RecaptchaChannel.postMessage(token);
                   })
@@ -42,11 +42,11 @@ class RecaptchaService {
                 });
               }
             </script>
-            <script src="https://www.google.com/recaptcha/api.js?render=6LcIqRotAAAAAAxKFD4PXru-BAN8XL2zj-n7TAcd" onload="onRecaptchaLoad()"></script>
+            <script src="https://www.google.com/recaptcha/api.js?render=6Le_NQktAAAAACGSaQhC9_rMYdzrbIzw1ylEbLBW" onload="onRecaptchaLoad()"></script>
           </head>
           <body></body>
         </html>
-      ''', baseUrl: 'https://pelt-womanlike-popular.ngrok-free.dev');
+      ''', baseUrl: 'http://localhost');
 
     return completer.future.timeout(
       const Duration(seconds: 15),

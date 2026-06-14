@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'detail_hotel_page.dart';
+import 'image_utils.dart';
 
-const String _baseUrl = 'https://pelt-womanlike-popular.ngrok-free.dev';
+const String _baseUrl = 'https://underwear-yeast-aching.ngrok-free.dev';
 
 class ListHotelPage extends StatefulWidget {
   final String city;
@@ -67,7 +68,11 @@ class _ListHotelPageState extends State<ListHotelPage> {
               'name': (h['name'] ?? '').toString(),
               'city': (h['city'] ?? '').toString(),
               'address': (h['address'] ?? '').toString(),
-              'image_url': (h['image_url'] ?? '').toString(),
+              'image_url': (h['image_url'] ?? '').toString().startsWith('/')
+                  ? 'https://underwear-yeast-aching.ngrok-free.dev${h['image_url']}'
+                  : (h['image_url'] ?? '').toString()
+                      .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
+                      .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev"),
               'average_rating': double.tryParse(
                     (h['average_rating'] ?? '0').toString(),
                   ) ??
@@ -284,32 +289,13 @@ class _ListHotelPageState extends State<ListHotelPage> {
                                           ),
                                           child: Stack(
                                             children: [
-                                              imageUrl.isNotEmpty
-                                                  ? Image.network(
-                                                      imageUrl,
-                                                      height: 150,
-                                                      width: double.infinity,
-                                                      fit: BoxFit.cover,
-                                                      errorBuilder: (_, __, ___) =>
-                                                          Container(
-                                                        height: 150,
-                                                        color: Colors
-                                                            .grey.shade200,
-                                                        child: const Icon(
-                                                            Icons.hotel,
-                                                            color: Colors.grey,
-                                                            size: 40),
-                                                      ),
-                                                    )
-                                                  : Container(
-                                                      height: 150,
-                                                      color:
-                                                          Colors.grey.shade200,
-                                                      child: const Icon(
-                                                          Icons.hotel,
-                                                          color: Colors.grey,
-                                                          size: 40),
-                                                    ),
+                                              buildNetworkImage(
+                                                imageUrl,
+                                                height: 150,
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                                fallbackHotelId: hotel['id'],
+                                              ),
 
                                               /// RATING BADGE
                                               Positioned(

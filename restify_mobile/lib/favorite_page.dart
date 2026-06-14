@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'detail_hotel_page.dart';
 import 'home_page.dart';
+import 'image_utils.dart';
 
 class FavoritePage extends StatefulWidget {
   const FavoritePage({super.key});
@@ -178,19 +179,12 @@ class _FavoritePageState extends State<FavoritePage> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: Image.network(
+              child: buildNetworkImage(
                 image,
                 width: 92,
                 height: 92,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 92,
-                    height: 92,
-                    color: Colors.grey.shade200,
-                    child: const Icon(Icons.broken_image),
-                  );
-                },
+                fallbackHotelId: hotel['id'],
               ),
             ),
             const SizedBox(width: 14),

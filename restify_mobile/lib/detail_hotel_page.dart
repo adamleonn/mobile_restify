@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'reservation_page.dart';
+import 'image_utils.dart';
+import 'map_page.dart';
 
-const String _detailBaseUrl = 'https://pelt-womanlike-popular.ngrok-free.dev';
+const String _detailBaseUrl = 'https://underwear-yeast-aching.ngrok-free.dev';
 
 class HotelDetailPage extends StatefulWidget {
   final int hotelId;
@@ -131,8 +132,24 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
       );
     }
 
-    final rooms = List<Map<String, dynamic>>.from(hotel!['rooms'] ?? []);
-    final imageUrl = (hotel!['image_url'] ?? '').toString();
+    final rawRooms = hotel!['rooms'] as List? ?? [];
+    final rooms = rawRooms.map<Map<String, dynamic>>((r) {
+      final item = Map<String, dynamic>.from(r);
+      final rawImg = (item['image_url'] ?? '').toString();
+      item['image_url'] = rawImg.startsWith('/')
+          ? 'https://underwear-yeast-aching.ngrok-free.dev$rawImg'
+          : rawImg
+              .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
+              .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev");
+      return item;
+    }).toList();
+
+    final rawHotelImg = (hotel!['image_url'] ?? '').toString();
+    final imageUrl = rawHotelImg.startsWith('/')
+        ? 'https://underwear-yeast-aching.ngrok-free.dev$rawHotelImg'
+        : rawHotelImg
+            .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
+            .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev");
     final gallery = imageUrl.isNotEmpty ? [imageUrl] : <String>[];
 
     // Build gallery from rooms' images too
@@ -152,9 +169,6 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
 
     final mapsLat = hotel!['latitude'];
     final mapsLng = hotel!['longitude'];
-    final mapsUrl = (mapsLat != null && mapsLng != null)
-        ? 'https://www.google.com/maps/search/?api=1&query=$mapsLat,$mapsLng'
-        : null;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -181,18 +195,11 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                               },
                             ),
                             items: gallery.map((img) {
-                              return Image.network(
+                              return buildNetworkImage(
                                 img,
                                 width: double.infinity,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  color: Colors.grey.shade300,
-                                  child: const Icon(
-                                    Icons.hotel,
-                                    size: 60,
-                                    color: Colors.grey,
-                                  ),
-                                ),
+                                fallbackHotelId: widget.hotelId,
                               );
                             }).toList(),
                           )
@@ -421,32 +428,14 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                                   children: [
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(18),
-                                      child: roomImage.isNotEmpty
-                                          ? Image.network(
-                                              roomImage,
-                                              width: 110,
-                                              height: 100,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) =>
-                                                  Container(
-                                                    width: 110,
-                                                    height: 100,
-                                                    color: Colors.grey.shade200,
-                                                    child: const Icon(
-                                                      Icons.hotel,
-                                                      color: Colors.grey,
-                                                    ),
-                                                  ),
-                                            )
-                                          : Container(
-                                              width: 110,
-                                              height: 100,
-                                              color: Colors.grey.shade200,
-                                              child: const Icon(
-                                                Icons.hotel,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
+                                      child: buildNetworkImage(
+                                        roomImage,
+                                        width: 110,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                        fallbackRoomId: room['id'],
+                                        isRoom: true,
+                                      ),
                                     ),
                                     const SizedBox(width: 16),
                                     Expanded(
@@ -506,17 +495,33 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                         ),
                       ],
 
+                      /// REVIEWS SECTION
+                      const SizedBox(height: 36),
+                      const Text(
+                        'Ulasan Tamu',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      _buildReviewsList(hotel!['ratings']),
+                      const SizedBox(height: 36),
+
                       /// MAP BUTTON
-                      if (mapsUrl != null)
+                      if (mapsLat != null && mapsLng != null)
                         GestureDetector(
-                          onTap: () async {
-                            final uri = Uri.parse(mapsUrl);
-                            if (await canLaunchUrl(uri)) {
-                              launchUrl(
-                                uri,
-                                mode: LaunchMode.externalApplication,
-                              );
-                            }
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MapPage(
+                                  hotelName: hotel!['name'] ?? '',
+                                  latitude: mapsLat.toString(),
+                                  longitude: mapsLng.toString(),
+                                ),
+                              ),
+                            );
                           },
                           child: Container(
                             width: double.infinity,
@@ -603,8 +608,8 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                             builder: (_) => ReservationPage(
                               hotel: {
                                 'id': hotel!['id'],
-                                'image': hotel!['image_url'] ?? '',
-                                'image_url': hotel!['image_url'] ?? '',
+                                'image': imageUrl,
+                                'image_url': imageUrl,
                                 'title': hotel!['name'] ?? '',
                                 'name': hotel!['name'] ?? '',
                                 'location': hotel!['city'] ?? '',
@@ -719,5 +724,118 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
       }
       return facilityItem(icon, f);
     }).toList();
+  }
+
+  Widget _buildReviewsList(dynamic ratings) {
+    final List list = ratings is List ? ratings : [];
+    if (list.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: const Center(
+          child: Text(
+            'Belum ada ulasan untuk hotel ini.',
+            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: list.map((r) {
+        final ratingVal = int.tryParse(r['rating']?.toString() ?? '5') ?? 5;
+        final reviewText = (r['review'] ?? '').toString();
+        final user = r['user'] as Map<String, dynamic>?;
+        final userName = (user?['name'] ?? 'Tamu').toString();
+        final userPic = (user?['profile_picture_url'] ?? '').toString();
+        final reviewImg = (r['image_url'] ?? '').toString();
+
+        final sanitizedUserPic = userPic.isNotEmpty
+            ? (userPic.startsWith('/')
+                ? 'https://underwear-yeast-aching.ngrok-free.dev$userPic'
+                : userPic
+                    .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
+                    .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev"))
+            : '';
+
+        final sanitizedReviewImg = reviewImg.isNotEmpty
+            ? (reviewImg.startsWith('/')
+                ? 'https://underwear-yeast-aching.ngrok-free.dev$reviewImg'
+                : reviewImg
+                    .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
+                    .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev"))
+            : '';
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: const Color(0xFF5F6F52),
+                    backgroundImage: sanitizedUserPic.isNotEmpty ? NetworkImage(sanitizedUserPic) : null,
+                    child: sanitizedUserPic.isEmpty ? const Icon(Icons.person, color: Colors.white, size: 20) : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userName,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: List.generate(5, (index) {
+                            return Icon(
+                              Icons.star_rounded,
+                              color: index < ratingVal ? Colors.amber : Colors.grey.shade300,
+                              size: 16,
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (reviewText.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  reviewText,
+                  style: TextStyle(color: Colors.grey.shade800, fontSize: 13, height: 1.4),
+                ),
+              ],
+              if (sanitizedReviewImg.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.network(
+                    sanitizedReviewImg,
+                    fit: BoxFit.cover,
+                    height: 180,
+                    width: double.infinity,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+    );
   }
 }

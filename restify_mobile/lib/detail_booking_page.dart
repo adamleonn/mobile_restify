@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:restify/home_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'image_utils.dart';
 
 class BookingDetailPage extends StatelessWidget {
   final Map<String, dynamic> hotel;
@@ -180,24 +181,12 @@ class BookingDetailPage extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(18),
 
-                    child: Image.network(
-                      hotel["image"],
-
+                    child: buildNetworkImage(
+                      hotel["image"] ?? "",
                       width: 100,
                       height: 100,
-
                       fit: BoxFit.cover,
-
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 100,
-                          height: 100,
-
-                          color: Colors.grey.shade300,
-
-                          child: const Icon(Icons.image_not_supported),
-                        );
-                      },
+                      fallbackHotelId: hotel["id"],
                     ),
                   ),
 
@@ -389,7 +378,7 @@ class BookingDetailPage extends StatelessWidget {
 
       final response = await http.post(
         Uri.parse(
-          'https://pelt-womanlike-popular.ngrok-free.dev/api/user/cancel-booking/$bookingId',
+          'https://underwear-yeast-aching.ngrok-free.dev/api/user/cancel-booking/$bookingId',
         ),
         headers: {
           'Authorization': 'Bearer $token',

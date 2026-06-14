@@ -32,7 +32,7 @@ class _BookingPageState extends State<BookingPage> {
 
       final response = await http.get(
         Uri.parse(
-          'https://pelt-womanlike-popular.ngrok-free.dev/api/user/booking-history',
+          'https://underwear-yeast-aching.ngrok-free.dev/api/user/booking-history',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -327,7 +327,12 @@ class _BookingPageState extends State<BookingPage> {
     final checkIn = formatBookingDate(booking['check_in_date']);
     final checkOut = formatBookingDate(booking['check_out_date']);
     final date = '$checkIn - $checkOut';
-    final image = (hotelData?['image_url'] ?? '').toString();
+    final rawBookingImg = (hotelData?['image_url'] ?? '').toString();
+    final image = rawBookingImg.startsWith('/')
+        ? 'https://underwear-yeast-aching.ngrok-free.dev$rawBookingImg'
+        : rawBookingImg
+            .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
+            .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev");
     final price = formatRupiah(booking['total_price']);
 
     Color statusColor;
@@ -458,6 +463,7 @@ class _BookingPageState extends State<BookingPage> {
                   MaterialPageRoute(
                     builder: (_) => BookingDetailPage(
                       hotel: {
+                        "id": hotelData?["id"],
                         "title": hotel,
                         "image": image,
                         "price": price,

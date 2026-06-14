@@ -4,8 +4,9 @@ import 'payment_success_page.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'image_utils.dart';
 
-const String _baseUrl = 'https://pelt-womanlike-popular.ngrok-free.dev';
+const String _baseUrl = 'https://underwear-yeast-aching.ngrok-free.dev';
 
 class ReservationPage extends StatefulWidget {
   final Map<String, dynamic> hotel;
@@ -375,24 +376,12 @@ class _ReservationPageState extends State<ReservationPage> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(18),
 
-                      child: Image.network(
-                        hotel["image"],
-
+                      child: buildNetworkImage(
+                        hotel["image"] ?? "",
                         width: 100,
                         height: 100,
-
                         fit: BoxFit.cover,
-
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: 100,
-                            height: 100,
-
-                            color: Colors.grey.shade300,
-
-                            child: const Icon(Icons.image_not_supported),
-                          );
-                        },
+                        fallbackHotelId: hotel["id"],
                       ),
                     ),
 

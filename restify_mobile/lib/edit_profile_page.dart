@@ -90,7 +90,7 @@ class _EditProfilePageState
       var request = http.MultipartRequest(
         'POST',
         Uri.parse(
-          'https://pelt-womanlike-popular.ngrok-free.dev/api/user/upload-profile',
+          'https://underwear-yeast-aching.ngrok-free.dev/api/user/upload-profile',
         ),
       );
 
@@ -156,7 +156,7 @@ class _EditProfilePageState
 
     try {
       final response = await http.post(
-        Uri.parse('https://pelt-womanlike-popular.ngrok-free.dev/api/user/update-profile'),
+        Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/user/update-profile'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
