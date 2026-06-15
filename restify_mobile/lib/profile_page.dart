@@ -40,7 +40,13 @@ class _ProfilePageState extends State<ProfilePage> {
       }
 
       final response = await http.get(
-        Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/profile'),
+        Uri.parse(
+          //punya Nada
+          'https://pelt-womanlike-popular.ngrok-free.dev/api/profile',
+          
+          // punya Adam
+          //'https://underwear-yeast-aching.ngrok-free.dev/api/profile'
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -86,6 +92,16 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  Future<void> deleteAccount() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          "Endpoint hapus akun belum dihubungkan",
+        ),
+      ),
+    );
+  }
+
   Future<void> logout() async {
     showDialog(
       context: context,
@@ -105,7 +121,13 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (token != null) {
         await http.post(
-          Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/logout'),
+          Uri.parse(
+            //punya Nada
+            'https://pelt-womanlike-popular.ngrok-free.dev/api/logout',
+          
+          // punya Adam
+            //'https://underwear-yeast-aching.ngrok-free.dev/api/logout'
+          ),
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -285,7 +307,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                               borderRadius: BorderRadius.circular(12),
                                               boxShadow: [
                                                 BoxShadow(
-                                                  color: Colors.black.withOpacity(0.04),
+                                                  color: Colors.black.withValues(alpha: 0.04),
                                                   blurRadius: 6,
                                                   offset: const Offset(0, 2),
                                                 ),
@@ -328,6 +350,21 @@ class _ProfilePageState extends State<ProfilePage> {
                                   child: profileMenu(
                                     icon: Icons.info_outline_rounded,
                                     title: "Tentang Restify",
+                                  ),
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                /// HAPUS AKUN
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(18),
+                                  onTap: () {
+                                    showDeleteAccountDialog(context);
+                                  },
+                                  child: profileMenu(
+                                    icon: Icons.delete_forever_rounded,
+                                    title: "Hapus Akun",
+                                    isRed: true,
                                   ),
                                 ),
                               ],
@@ -475,6 +512,76 @@ class _ProfilePageState extends State<ProfilePage> {
                         fontSize: 15,
                       ),
                     ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFFCF7),
+
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+
+          title: const Text(
+            "Hapus Akun",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          content: const Text(
+            "Apakah Anda yakin ingin menghapus akun?\n\n"
+            "Seluruh data profil, riwayat pemesanan, dan data akun akan dihapus secara permanen dan tidak dapat dipulihkan kembali.",
+            style: TextStyle(height: 1.4),
+          ),
+
+          actionsPadding: const EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            16,
+          ),
+
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+
+                    child: const Text("Batal"),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+
+                      deleteAccount();
+                    },
+
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE57373),
+                      foregroundColor: Colors.white,
+                    ),
+
+                    child: const Text("Hapus"),
                   ),
                 ),
               ],

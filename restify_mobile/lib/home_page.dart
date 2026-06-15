@@ -37,10 +37,6 @@ class _HomePageState extends State<HomePage> {
     pages = [
       HomeContent(key: homeKey),
 
-      const Center(
-        child: Text("AI Assistant Page", style: TextStyle(fontSize: 22)),
-      ),
-
       const BookingPage(),
 
       const FavoritePage(),
@@ -62,6 +58,37 @@ class _HomePageState extends State<HomePage> {
         child: IndexedStack(index: currentIndex, children: pages),
       ),
 
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: const Color(0xFFFEFAE0),
+
+        onPressed: () {
+          // buka AI page
+        },
+
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.auto_awesome_rounded,
+              color: Color(0xFF5F6F52),
+              size: 20,
+            ),
+
+            Text(
+              "AI",
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5F6F52),
+              ),
+            ),
+          ],
+        ),
+      ),
+
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.endFloat,
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
 
@@ -81,11 +108,6 @@ class _HomePageState extends State<HomePage> {
 
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.forum_rounded),
-            label: "Smart Travel",
-          ),
 
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment_rounded),
@@ -145,7 +167,11 @@ class _HomeContentState extends State<HomeContent> {
 
     try {
       final uri = Uri.parse(
-        'https://underwear-yeast-aching.ngrok-free.dev/api/hotels',
+        //punya Nada
+        'https://pelt-womanlike-popular.ngrok-free.dev/api/hotels',
+
+        // punya Adam
+        //'https://underwear-yeast-aching.ngrok-free.dev/api/hotels',
       ).replace(queryParameters: {'city': cityName, 'per_page': '50'});
 
       final response = await http.get(
@@ -171,10 +197,17 @@ class _HomeContentState extends State<HomeContent> {
               "address": (h["address"] ?? "").toString(),
               "image_url": h["image_url"] != null
                   ? (h["image_url"].toString().startsWith('/')
-                      ? 'https://underwear-yeast-aching.ngrok-free.dev${h["image_url"]}'
-                      : h["image_url"].toString()
-                          .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
-                          .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev"))
+                        ? 'https://underwear-yeast-aching.ngrok-free.dev${h["image_url"]}'
+                        : h["image_url"]
+                              .toString()
+                              .replaceAll(
+                                "http://localhost:8000",
+                                "https://underwear-yeast-aching.ngrok-free.dev",
+                              )
+                              .replaceAll(
+                                "http://127.0.0.1:8000",
+                                "https://underwear-yeast-aching.ngrok-free.dev",
+                              ))
                   : "https://via.placeholder.com/400x300.png?text=No+Image",
               "average_rating":
                   double.tryParse(
@@ -213,10 +246,16 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   bool get isSearchActive => searchQuery.trim().isNotEmpty;
+  bool get isSortActive => selectedSort != "Default";
+  bool get isFilterActive => isSearchActive || isSortActive;
 
   String selectedCity = "Bandung";
+  String selectedSort = "Default";
+
+  bool isSortDropdownOpen = false;
 
   final List<String> cities = ["Bali", "Bandung", "Jakarta", "Yogyakarta"];
+  final List<String> sortOptions = ["Default", "↓Termurah", "↑Termahal"];
 
   bool isDropdownOpen = false;
   bool hasNewNotification = true;
@@ -244,9 +283,19 @@ class _HomeContentState extends State<HomeContent> {
       return matchesCity && matchesSearch;
     }).toList();
 
-    filteredHotels.sort(
-      (a, b) => a["name"].toString().compareTo(b["name"].toString()),
-    );
+    if (selectedSort == "Termurah") {
+      filteredHotels.sort(
+        (a, b) => (a["lowest_price"] ?? 0).compareTo(b["lowest_price"] ?? 0),
+      );
+    } else if (selectedSort == "Termahal") {
+      filteredHotels.sort(
+        (a, b) => (b["lowest_price"] ?? 0).compareTo(a["lowest_price"] ?? 0),
+      );
+    } else {
+      filteredHotels.sort(
+        (a, b) => a["name"].toString().compareTo(b["name"].toString()),
+      );
+    }
 
     final bool isDevelopmentCity = isCityInDevelopment(selectedCity);
 
@@ -617,7 +666,7 @@ class _HomeContentState extends State<HomeContent> {
 
                                     boxShadows: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.12),
+                                        color: Colors.black.withValues(alpha: 0.12),
 
                                         blurRadius: 18,
 
@@ -636,8 +685,8 @@ class _HomeContentState extends State<HomeContent> {
                                           padding: const EdgeInsets.all(8),
 
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(
-                                              0.15,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.15,
                                             ),
 
                                             shape: BoxShape.circle,
@@ -685,39 +734,158 @@ class _HomeContentState extends State<HomeContent> {
 
               const SizedBox(height: 16),
 
-              /// SEARCH BAR
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-
-                  borderRadius: BorderRadius.circular(14),
-                ),
-
-                child: TextField(
-                  controller: searchController,
-
-                  onChanged: (value) {
-                    setState(() {
-                      searchQuery = value;
-                    });
-                  },
-
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-
-                    icon: Icon(Icons.search),
-
-                    hintText: "Cari hotel, villa, resort...",
+              /// SEARCH + SORT
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: TextField(
+                        controller: searchController,
+                        onChanged: (value) {
+                          setState(() {
+                            searchQuery = value;
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          icon: Icon(Icons.search),
+                          hintText: "Cari hotel...",
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+
+                  const SizedBox(width: 10),
+
+                  SizedBox(
+                    width: 105,
+                    height: 42,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEFAE0),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton2<String>(
+                          value: selectedSort,
+
+                          isDense: true,
+                          isExpanded: true,
+
+                          onMenuStateChange: (isOpen) {
+                            setState(() {
+                              isSortDropdownOpen = isOpen;
+                            });
+                          },
+
+                          iconStyleData: IconStyleData(
+                            icon: AnimatedRotation(
+                              turns: isSortDropdownOpen ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 250),
+                              child: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                color: Color(0xFF5F6F52),
+                              ),
+                            ),
+                          ),
+
+                          buttonStyleData: const ButtonStyleData(
+                            padding: EdgeInsets.zero,
+                            height: 40,
+                          ),
+
+                          dropdownStyleData: DropdownStyleData(
+                            width: 140,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+
+                          items: sortOptions.map((sort) {
+                            final isSelected = sort == selectedSort;
+
+                            return DropdownMenuItem<String>(
+                              value: sort,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? const Color(0xFFFEFAE0)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.sort,
+                                      size: 16,
+                                      color: isSelected
+                                          ? const Color(0xFF5F6F52)
+                                          : Colors.grey,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        sort,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: isSelected
+                                              ? FontWeight.w600
+                                              : FontWeight.normal,
+                                          color: isSelected
+                                              ? const Color(0xFF5F6F52)
+                                              : Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+
+                          selectedItemBuilder: (context) {
+                            return sortOptions.map((sort) {
+                              return Text(
+                                sort,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black,
+                                ),
+                              );
+                            }).toList();
+                          },
+                          onChanged: (value) {
+                            if (value == null) return;
+
+                            setState(() {
+                              selectedSort = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 24),
 
               /// TITLE
-              if (!isSearchActive && !isDevelopmentCity) ...[
+              if (!isFilterActive && !isDevelopmentCity) ...[
                 const Text(
                   "Rekomendasi Hotel",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -802,7 +970,7 @@ class _HomeContentState extends State<HomeContent> {
                 )
               else ...[
                 /// CAROUSEL
-                if (!isSearchActive) ...[
+                if (!isFilterActive) ...[
                   Stack(
                     alignment: Alignment.center,
 
@@ -811,7 +979,7 @@ class _HomeContentState extends State<HomeContent> {
                         carouselController: carouselController,
 
                         options: CarouselOptions(
-                          height: 240,
+                          height: 300,
 
                           autoPlay: true,
 
@@ -899,7 +1067,7 @@ class _HomeContentState extends State<HomeContent> {
                 ],
 
                 /// HEADER LIST HOTEL
-                if (filteredHotels.isNotEmpty || !isSearchActive) ...[
+                if (filteredHotels.isNotEmpty || !isFilterActive) ...[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
 
@@ -912,6 +1080,8 @@ class _HomeContentState extends State<HomeContent> {
                           Text(
                             isSearchActive
                                 ? "Hasil Pencarian"
+                                : isSortActive
+                                ? "Hasil Sort Harga"
                                 : "Pilihan Hotel Lainnya",
 
                             style: const TextStyle(
@@ -926,6 +1096,8 @@ class _HomeContentState extends State<HomeContent> {
                           Text(
                             isSearchActive
                                 ? "Hasil pencarian hotel di $selectedCity"
+                                : isSortActive
+                                ? "Hotel $selectedCity dari harga ${selectedSort.toLowerCase()}"
                                 : "Pilihan hotel lainnya di $selectedCity",
 
                             style: TextStyle(
@@ -977,11 +1149,13 @@ class _HomeContentState extends State<HomeContent> {
 
                     physics: const NeverScrollableScrollPhysics(),
 
-                    itemCount: filteredHotels.length > 3
-                        ? 3
-                        : filteredHotels.length,
+                    itemCount: isFilterActive
+                        ? filteredHotels.length
+                        : (filteredHotels.length > 3
+                              ? 3
+                              : filteredHotels.length),
 
-                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    separatorBuilder: (_, _) => const SizedBox(height: 16),
 
                     itemBuilder: (context, index) {
                       final hotel = filteredHotels[index];
@@ -1114,7 +1288,7 @@ class _HomeContentState extends State<HomeContent> {
                             ? 3
                             : sortedHotels.length,
 
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        separatorBuilder: (_, _) => const SizedBox(height: 16),
 
                         itemBuilder: (context, index) {
                           final hotel = sortedHotels[index];
@@ -1175,7 +1349,7 @@ class _HomeContentState extends State<HomeContent> {
 
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
 
             blurRadius: 10,
 
@@ -1211,7 +1385,7 @@ class _HomeContentState extends State<HomeContent> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -1309,7 +1483,7 @@ class _HomeContentState extends State<HomeContent> {
 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
 
             blurRadius: 12,
 
@@ -1326,7 +1500,7 @@ class _HomeContentState extends State<HomeContent> {
 
             child: buildNetworkImage(
               image,
-              height: 180,
+              height: 280,
               width: double.infinity,
               fit: BoxFit.cover,
               fallbackHotelId: hotel["id"],
@@ -1343,7 +1517,10 @@ class _HomeContentState extends State<HomeContent> {
 
                 end: Alignment.bottomCenter,
 
-                colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                colors: [
+                  Colors.transparent,
+                  Color(0xFF5F6F52).withValues(alpha: 0.85),
+                ],
               ),
             ),
           ),
@@ -1409,18 +1586,14 @@ class _HomeContentState extends State<HomeContent> {
                     const Icon(
                       Icons.location_on,
 
-                      color: Colors.white70,
+                      color: Colors.white,
 
                       size: 16,
                     ),
 
                     const SizedBox(width: 4),
 
-                    Text(
-                      location,
-
-                      style: const TextStyle(color: Colors.white70),
-                    ),
+                    Text(location, style: const TextStyle(color: Colors.white)),
                   ],
                 ),
 
@@ -1433,9 +1606,9 @@ class _HomeContentState extends State<HomeContent> {
                     Text(
                       price,
                       style: const TextStyle(
-                        color: Color(0xFF5F6F52),
+                        color: Color(0xFFFFE082),
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontSize: 18,
                       ),
                     ),
 
@@ -1473,7 +1646,7 @@ class _HomeContentState extends State<HomeContent> {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

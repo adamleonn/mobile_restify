@@ -90,7 +90,11 @@ class _EditProfilePageState
       var request = http.MultipartRequest(
         'POST',
         Uri.parse(
-          'https://underwear-yeast-aching.ngrok-free.dev/api/user/upload-profile',
+          //punya Nada
+          'https://pelt-womanlike-popular.ngrok-free.dev/api/user/upload-profile',
+          
+          // punya Adam
+          //'https://underwear-yeast-aching.ngrok-free.dev/api/user/upload-profile',
         ),
       );
 
@@ -295,8 +299,8 @@ class _EditProfilePageState
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black
-                                  .withOpacity(
-                                      0.06),
+                                  .withValues(
+                                      alpha: 0.06),
 
                               blurRadius: 10,
 
@@ -362,8 +366,8 @@ class _EditProfilePageState
                                 BoxShadow(
                                   color: Colors
                                       .black
-                                      .withOpacity(
-                                          0.08),
+                                      .withValues(
+                                          alpha: 0.08),
 
                                   blurRadius: 6,
 
@@ -756,8 +760,8 @@ class _EditProfilePageState
                           color:
                               const Color(
                                       0xFF5F6F52)
-                                  .withOpacity(
-                                      0.18),
+                                  .withValues(
+                                      alpha: 0.18),
 
                           blurRadius: 10,
 

@@ -672,7 +672,7 @@ class _ReservationPageState extends State<ReservationPage> {
                   padding: const EdgeInsets.all(14),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE94235).withOpacity(0.1),
+                    color: const Color(0xFFE94235).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFE94235)),
                   ),

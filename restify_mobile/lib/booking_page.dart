@@ -16,10 +16,13 @@ class _BookingPageState extends State<BookingPage> {
 
   bool isLoading = true;
 
-  String selectedTab = "Upcoming";
+  String selectedTab = "Akan Datang";
+  DateTime? selectedDate;
+
   String userName = "-";
   String userEmail = "-";
   String userPhone = "-";
+  
 
   Future<void> getBookingHistory() async {
     try {
@@ -32,7 +35,12 @@ class _BookingPageState extends State<BookingPage> {
 
       final response = await http.get(
         Uri.parse(
-          'https://underwear-yeast-aching.ngrok-free.dev/api/user/booking-history',
+
+          //punya Nada
+          'https://pelt-womanlike-popular.ngrok-free.dev/api/user/booking-history',
+          
+          // punya Adam
+          // 'https://underwear-yeast-aching.ngrok-free.dev/api/user/booking-history',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -96,19 +104,44 @@ class _BookingPageState extends State<BookingPage> {
     final filteredBookings = bookings.where((booking) {
       final status = booking['status'];
 
-      if (selectedTab == 'Upcoming') {
-        return status == 'pending' || status == 'confirmed';
+      bool matchesTab = false;
+
+      if (selectedTab == 'Akan Datang') {
+        matchesTab =
+            status == 'pending' ||
+            status == 'confirmed';
       }
 
-      if (selectedTab == 'Completed') {
-        return status == 'checked_in' || status == 'completed';
+      if (selectedTab == 'Selesai') {
+        matchesTab =
+            status == 'checked_in' ||
+            status == 'completed';
       }
 
-      if (selectedTab == 'Cancelled') {
-        return status == 'cancelled';
+      if (selectedTab == 'Dibatalkan') {
+        matchesTab =
+            status == 'cancelled';
       }
 
-      return false;
+      if (!matchesTab) {
+        return false;
+      }
+
+      if (selectedDate != null) {
+        final bookingDate = DateTime.tryParse(
+          booking['check_in_date'].toString(),
+        );
+
+        if (bookingDate == null) {
+          return false;
+        }
+
+        return bookingDate.year == selectedDate!.year &&
+            bookingDate.month == selectedDate!.month &&
+            bookingDate.day == selectedDate!.day;
+      }
+
+      return true;
     }).toList();
 
     return Scaffold(
@@ -150,34 +183,66 @@ class _BookingPageState extends State<BookingPage> {
 
                         const SizedBox(width: 12),
 
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-
-                          children: [
-                            Text(
-                              "Pemesanan",
-
-                              style: TextStyle(
-                                color: Colors.white,
-
-                                fontSize: 26,
-
-                                fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                "Pemesanan",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
 
-                            SizedBox(height: 4),
+                              SizedBox(height: 4),
 
-                            Text(
-                              "Kelola reservasi hotel kamu",
-
-                              style: TextStyle(
-                                color: Colors.white70,
-
-                                fontSize: 13,
+                              Text(
+                                "Kelola reservasi hotel kamu",
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                        ),
+
+                        IconButton(
+                          onPressed: () async {
+                            final pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: selectedDate ?? DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2035),
+
+                              builder: (context, child) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: const ColorScheme.light(
+                                      primary: Color(0xFF5F6F52),
+                                      onPrimary: Colors.white,
+                                      surface: Colors.white,
+                                    ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
+                            );
+
+                            if (pickedDate != null) {
+                              setState(() {
+                                selectedDate = pickedDate;
+                              });
+                            }
+                          },
+
+                          icon: const Icon(
+                            Icons.calendar_month_rounded,
+                            color: Colors.white,
+                            size: 26,
+                          ),
                         ),
                       ],
                     ),
@@ -189,7 +254,7 @@ class _BookingPageState extends State<BookingPage> {
                   Row(
                     children: [
                       buildTab(
-                        title: "Upcoming",
+                        title: "Akan Datang",
 
                         activeColor: const Color(0xFF3E4B35),
 
@@ -197,13 +262,13 @@ class _BookingPageState extends State<BookingPage> {
                       ),
 
                       buildTab(
-                        title: "Completed",
+                        title: "Selesai",
 
                         activeColor: const Color(0xFF5F6772),
                       ),
 
                       buildTab(
-                        title: "Cancelled",
+                        title: "Dibatalkan",
 
                         activeColor: const Color(0xFFD85C5F),
 
@@ -219,6 +284,48 @@ class _BookingPageState extends State<BookingPage> {
           /// =========================
           /// BOOKING LIST
           /// =========================
+          
+          if (selectedDate != null)
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEFAE0),
+                borderRadius: BorderRadius.circular(20),
+              ),
+
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+
+                children: [
+                  Text(
+                    "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedDate = null;
+                      });
+                    },
+
+                    child: const Icon(
+                      Icons.close,
+                      size: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: filteredBookings.isEmpty
                 ? Center(
@@ -237,7 +344,7 @@ class _BookingPageState extends State<BookingPage> {
 
                     itemCount: filteredBookings.length,
 
-                    separatorBuilder: (_, __) => const SizedBox(height: 14),
+                    separatorBuilder: (_, _) => const SizedBox(height: 14),
 
                     itemBuilder: (context, index) {
                       final booking =
@@ -277,7 +384,7 @@ class _BookingPageState extends State<BookingPage> {
           padding: const EdgeInsets.symmetric(vertical: 15),
 
           decoration: BoxDecoration(
-            color: isSelected ? activeColor : activeColor.withOpacity(0.15),
+            color: isSelected ? activeColor : activeColor.withValues(alpha: 0.15),
 
             borderRadius: BorderRadius.only(
               topLeft: isLeft ? const Radius.circular(18) : Radius.zero,
@@ -336,13 +443,37 @@ class _BookingPageState extends State<BookingPage> {
     final price = formatRupiah(booking['total_price']);
 
     Color statusColor;
+    String statusLabel;
 
-    if (status == 'pending' || status == 'confirmed') {
-      statusColor = const Color(0xFF5F6F52);
-    } else if (status == 'completed' || status == 'checked_in') {
-      statusColor = const Color(0xFF5F6772);
-    } else {
-      statusColor = const Color(0xFFD85C5F);
+    switch (status) {
+      case 'pending':
+        statusColor = const Color(0xFFF4B400);
+        statusLabel = 'Menunggu Konfirmasi';
+        break;
+
+      case 'confirmed':
+        statusColor = const Color(0xFF5F6F52);
+        statusLabel = 'Dikonfirmasi';
+        break;
+
+      case 'checked_in':
+        statusColor = const Color(0xFF4285F4);
+        statusLabel = 'Sedang Menginap';
+        break;
+
+      case 'completed':
+        statusColor = const Color(0xFF5F6772);
+        statusLabel = 'Selesai';
+        break;
+
+      case 'cancelled':
+        statusColor = const Color(0xFFD85C5F);
+        statusLabel = 'Dibatalkan';
+        break;
+
+      default:
+        statusColor = Colors.grey;
+        statusLabel = status;
     }
 
     return Container(
@@ -355,7 +486,7 @@ class _BookingPageState extends State<BookingPage> {
 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
 
             blurRadius: 10,
 
@@ -373,13 +504,13 @@ class _BookingPageState extends State<BookingPage> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
 
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.12),
+              color: statusColor.withValues(alpha: 0.12),
 
               borderRadius: BorderRadius.circular(20),
             ),
 
             child: Text(
-              status,
+              statusLabel,
 
               style: TextStyle(
                 color: statusColor,
@@ -512,7 +643,7 @@ class _BookingPageState extends State<BookingPage> {
                   await getBookingHistory();
 
                   setState(() {
-                    selectedTab = "Cancelled";
+                    selectedTab = "Dibatalkan";
                   });
                 }
               },

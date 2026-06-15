@@ -998,8 +998,8 @@ class _SignUpPageState
                         BoxShadow(
                           color: Colors
                               .black
-                              .withOpacity(
-                                  0.12),
+                              .withValues(
+                                  alpha: 0.12),
 
                           blurRadius: 10,
 

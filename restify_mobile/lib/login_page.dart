@@ -72,7 +72,12 @@ class _LoginPageState extends State<LoginPage> {
         return;
       }
       final response = await http.post(
-        Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/login'),
+        Uri.parse(
+          //punya Nada
+          'https://pelt-womanlike-popular.ngrok-free.dev/api/login',
+          // punya Adam 
+          // 'https://underwear-yeast-aching.ngrok-free.dev/api/login'
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -633,8 +638,8 @@ class _LoginPageState extends State<LoginPage> {
                       boxShadow: [
                         BoxShadow(
                           color:
-                              Colors.black.withOpacity(
-                            0.12,
+                              Colors.black.withValues(
+                            alpha: 0.12,
                           ),
 
                           blurRadius: 10,

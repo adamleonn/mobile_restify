@@ -125,7 +125,7 @@ class BookingDetailPage extends StatelessWidget {
               padding: const EdgeInsets.all(22),
 
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.08),
+                color: statusColor.withValues(alpha: 0.08),
 
                 borderRadius: BorderRadius.circular(24),
 
@@ -378,7 +378,12 @@ class BookingDetailPage extends StatelessWidget {
 
       final response = await http.post(
         Uri.parse(
-          'https://underwear-yeast-aching.ngrok-free.dev/api/user/cancel-booking/$bookingId',
+
+          //punya Nada
+          'https://pelt-womanlike-popular.ngrok-free.dev/api/user/cancel-booking/$bookingId',
+          
+          // punya Adam
+          //'https://underwear-yeast-aching.ngrok-free.dev/api/user/cancel-booking/$bookingId',
         ),
         headers: {
           'Authorization': 'Bearer $token',

@@ -6,7 +6,9 @@ import 'reservation_page.dart';
 import 'image_utils.dart';
 import 'map_page.dart';
 
-const String _detailBaseUrl = 'https://underwear-yeast-aching.ngrok-free.dev';
+const String _detailBaseUrl = 'https://pelt-womanlike-popular.ngrok-free.dev'; //punya Nada
+          
+          // punya Adam'https://underwear-yeast-aching.ngrok-free.dev';
 
 class HotelDetailPage extends StatefulWidget {
   final int hotelId;

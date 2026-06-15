@@ -28,11 +28,23 @@ class RecaptchaService {
         <html>
           <head>
             <script>
-              // Definisikan fungsi callback DI ATAS script loader 
-              // untuk menghindari race condition (onload terpanggil sebelum fungsi di-parse)
+            // PUNYA ADAM
+            //  function onRecaptchaLoad() {
+            //     grecaptcha.ready(function () {
+            //       grecaptcha.execute('6Le_NQktAAAAACGSaQhC9_rMYdzrbIzw1ylEbLBW', {action: 'login'})
+            //       .then(function(token) {
+            //         RecaptchaChannel.postMessage(token);
+            //       })
+            //       .catch(function(err) {
+            //         RecaptchaChannel.postMessage("error: " + err);
+            //       });
+            //     });
+            //   }
+
+            // PUNYA NADA
               function onRecaptchaLoad() {
                 grecaptcha.ready(function () {
-                  grecaptcha.execute('6Le_NQktAAAAACGSaQhC9_rMYdzrbIzw1ylEbLBW', {action: 'login'})
+                  grecaptcha.execute('6LcIqRotAAAAAAxKFD4PXru-BAN8XL2zj-n7TAcd', {action: 'login'})
                   .then(function(token) {
                     RecaptchaChannel.postMessage(token);
                   })
@@ -42,7 +54,13 @@ class RecaptchaService {
                 });
               }
             </script>
-            <script src="https://www.google.com/recaptcha/api.js?render=6Le_NQktAAAAACGSaQhC9_rMYdzrbIzw1ylEbLBW" onload="onRecaptchaLoad()"></script>
+          
+            //PUNYA ADAM
+            //<script src="https://www.google.com/recaptcha/api.js?render=6Le_NQktAAAAACGSaQhC9_rMYdzrbIzw1ylEbLBW" onload="onRecaptchaLoad()"></script>
+
+            //PUNYA NADA
+            <script src="https://www.google.com/recaptcha/api.js?render=6LcIqRotAAAAAAxKFD4PXru-BAN8XL2zj-n7TAcd" onload="onRecaptchaLoad()"></script>
+
           </head>
           <body></body>
         </html>
