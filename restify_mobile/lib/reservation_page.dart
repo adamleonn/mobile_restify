@@ -183,15 +183,15 @@ class _ReservationPageState extends State<ReservationPage> {
         },
       );
 
-      print(response.statusCode);
-      print(response.body);
+      debugPrint(response.statusCode.toString());
+      debugPrint(response.body.toString());
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
         final snapToken = data['snap_token'];
 
-        final result = await Navigator.push(
+        if (!mounted) return; final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => MidtransPage(
@@ -205,7 +205,7 @@ class _ReservationPageState extends State<ReservationPage> {
         }
       }
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
     }
   }
 
@@ -225,14 +225,14 @@ class _ReservationPageState extends State<ReservationPage> {
 
       final data = jsonDecode(response.body);
 
-      print(data);
+      debugPrint(data.toString());
 
       if (response.statusCode == 200) {
         final paymentStatus =
             data['data']['payment_status'];
 
         if (paymentStatus == 'paid') {
-          Navigator.pushReplacement(
+          if (!mounted) return; Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (_) => PaymentSuccessPage(
@@ -252,7 +252,7 @@ class _ReservationPageState extends State<ReservationPage> {
         }
       }
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
     }
   }
 
@@ -672,7 +672,7 @@ class _ReservationPageState extends State<ReservationPage> {
                   padding: const EdgeInsets.all(14),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE94235).withOpacity(0.1),
+                    color: const Color(0xFFE94235).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFE94235)),
                   ),

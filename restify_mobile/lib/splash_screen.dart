@@ -20,8 +20,8 @@ class _SplashScreenState extends State<SplashScreen> {
         context,
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 1400),
-          pageBuilder: (_, __, ___) => const LandingPage(),
-          transitionsBuilder: (_, animation, __, child) {
+          pageBuilder: (_, _, _) => const LandingPage(),
+          transitionsBuilder: (_, animation, _, child) {
             final fade = CurvedAnimation(
               parent: animation,
               curve: Curves.easeInOut,

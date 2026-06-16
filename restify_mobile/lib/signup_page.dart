@@ -97,7 +97,7 @@ class _SignUpPageState
       final token = await RecaptchaService.getToken()
         .timeout(const Duration(seconds: 10))
         .catchError((e) {
-          print("reCAPTCHA error: $e");
+          debugPrint("reCAPTCHA error: $e");
           return null;
         });
       if (token == null) {
@@ -134,7 +134,7 @@ class _SignUpPageState
       if (response.statusCode == 200 ||
           response.statusCode == 201) {
 
-        Navigator.pushReplacement(
+        if (!mounted) return; Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => const LoginPage(),
@@ -180,7 +180,7 @@ class _SignUpPageState
             "Tidak dapat terhubung ke server";
       });
 
-      print(e);
+      debugPrint(e.toString());
     }
   }
 
@@ -998,8 +998,7 @@ class _SignUpPageState
                         BoxShadow(
                           color: Colors
                               .black
-                              .withOpacity(
-                                  0.12),
+                              .withValues(alpha: 0.12),
 
                           blurRadius: 10,
 

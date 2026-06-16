@@ -237,7 +237,7 @@ class _BookingPageState extends State<BookingPage> {
 
                     itemCount: filteredBookings.length,
 
-                    separatorBuilder: (_, __) => const SizedBox(height: 14),
+                    separatorBuilder: (_, _) => const SizedBox(height: 14),
 
                     itemBuilder: (context, index) {
                       final booking =
@@ -277,7 +277,7 @@ class _BookingPageState extends State<BookingPage> {
           padding: const EdgeInsets.symmetric(vertical: 15),
 
           decoration: BoxDecoration(
-            color: isSelected ? activeColor : activeColor.withOpacity(0.15),
+            color: isSelected ? activeColor : activeColor.withValues(alpha: 0.15),
 
             borderRadius: BorderRadius.only(
               topLeft: isLeft ? const Radius.circular(18) : Radius.zero,
@@ -355,7 +355,7 @@ class _BookingPageState extends State<BookingPage> {
 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
 
             blurRadius: 10,
 
@@ -373,7 +373,7 @@ class _BookingPageState extends State<BookingPage> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
 
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.12),
+              color: statusColor.withValues(alpha: 0.12),
 
               borderRadius: BorderRadius.circular(20),
             ),
@@ -506,7 +506,7 @@ class _BookingPageState extends State<BookingPage> {
                   ),
                 );
 
-                print("RESULT DARI DETAIL = $result");
+                debugPrint("RESULT DARI DETAIL = $result");
 
                 if (result == true) {
                   await getBookingHistory();

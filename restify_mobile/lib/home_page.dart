@@ -7,6 +7,7 @@ import 'booking_page.dart';
 import 'detail_hotel_page.dart';
 import 'favorite_page.dart';
 import 'image_utils.dart';
+import 'chatbot_page.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -60,6 +61,17 @@ class _HomePageState extends State<HomePage> {
         },
 
         child: IndexedStack(index: currentIndex, children: pages),
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ChatbotPage()),
+          );
+        },
+        backgroundColor: const Color(0xFFB99470),
+        child: const Icon(Icons.chat_bubble_rounded, color: Colors.white),
       ),
 
       bottomNavigationBar: BottomNavigationBar(
@@ -617,7 +629,7 @@ class _HomeContentState extends State<HomeContent> {
 
                                     boxShadows: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.12),
+                                        color: Colors.black.withValues(alpha: 0.12),
 
                                         blurRadius: 18,
 
@@ -636,9 +648,7 @@ class _HomeContentState extends State<HomeContent> {
                                           padding: const EdgeInsets.all(8),
 
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(
-                                              0.15,
-                                            ),
+                                            color: Colors.white.withValues(alpha: 0.15),
 
                                             shape: BoxShape.circle,
                                           ),
@@ -981,7 +991,7 @@ class _HomeContentState extends State<HomeContent> {
                         ? 3
                         : filteredHotels.length,
 
-                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    separatorBuilder: (_, _) => const SizedBox(height: 16),
 
                     itemBuilder: (context, index) {
                       final hotel = filteredHotels[index];
@@ -1114,7 +1124,7 @@ class _HomeContentState extends State<HomeContent> {
                             ? 3
                             : sortedHotels.length,
 
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        separatorBuilder: (_, _) => const SizedBox(height: 16),
 
                         itemBuilder: (context, index) {
                           final hotel = sortedHotels[index];
@@ -1175,7 +1185,7 @@ class _HomeContentState extends State<HomeContent> {
 
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
 
             blurRadius: 10,
 
@@ -1211,7 +1221,7 @@ class _HomeContentState extends State<HomeContent> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -1309,7 +1319,7 @@ class _HomeContentState extends State<HomeContent> {
 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
 
             blurRadius: 12,
 
@@ -1343,7 +1353,7 @@ class _HomeContentState extends State<HomeContent> {
 
                 end: Alignment.bottomCenter,
 
-                colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
               ),
             ),
           ),
@@ -1473,7 +1483,7 @@ class _HomeContentState extends State<HomeContent> {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

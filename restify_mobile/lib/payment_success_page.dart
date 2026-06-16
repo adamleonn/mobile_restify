@@ -30,8 +30,8 @@ class PaymentSuccessPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("BOOKING DATA:");
-print(bookingData);
+    debugPrint("BOOKING DATA:");
+debugPrint(bookingData.toString());
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -49,7 +49,7 @@ print(bookingData);
                 height: 130,
 
                 decoration: BoxDecoration(
-                  color: const Color(0xFF5F6F52).withOpacity(0.1),
+                  color: const Color(0xFF5F6F52).withValues(alpha: 0.1),
 
                   shape: BoxShape.circle,
                 ),

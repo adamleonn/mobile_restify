@@ -51,7 +51,27 @@ flutter run
 
 ---
 
+## Fitur-Fitur Baru Aplikasi Mobile
+
+Berikut adalah beberapa fitur baru yang telah ditambahkan ke dalam aplikasi mobile untuk menyelaraskannya dengan fitur pada aplikasi web:
+1. **Asisten AI Rekomendasi (Chatbot)**:
+   - Dapat diakses melalui tombol melayang (Floating Action Button) chat di bagian pojok kanan bawah Beranda.
+   - Menggunakan model `gemini-1.5-flash` dengan konfigurasi API Key di file `lib/chatbot_page.dart`.
+   - Mengambil daftar hotel dari database secara dinamis melalui API `/api/hotels` sebagai konteks rekomendasi.
+2. **Checkout Pemesanan**:
+   - Menambahkan tombol "Checkout" pada halaman detail pemesanan yang otomatis aktif ketika status pesanan adalah `Checked-in`.
+3. **Rating & Ulasan**:
+   - Menambahkan tombol "Beri Ulasan" pada halaman detail pemesanan yang otomatis aktif ketika status pesanan adalah `Completed`.
+   - Menampilkan dialog / bottom sheet rating (1-5 bintang) dan teks ulasan yang terintegrasi dengan API rating backend.
+4. **Lupa Kata Sandi Terintegrasi n8n**:
+   - Menyelaraskan alur lupa kata sandi dengan penggunaan kode reset 6 digit (OTP) yang dikirim ke email pengguna via integrasi n8n backend.
+   - UI telah disesuaikan agar pengguna menginputkan kode OTP dari email secara manual.
+
+---
+
 ## Catatan Penting
 - Karena versi gratis dari ngrok digunakan, URL Forwarding akan selalu berubah setiap kali Anda menutup dan membuka ulang ngrok. Oleh karena itu, mohon **selalu mengupdate URL ngrok di kode Flutter setiap kali Anda menjalankan ulang ngrok**.
 - Jika API gagal dimuat atau URL salah, aplikasi sudah dilengkapi sistem *fallback* gambar sehingga tidak akan error (layar merah) dan aplikasi tetap berjalan aman menampilkan default gambar.
 - Fitur Maps akan otomatis mendeteksi kordinat hotel dan membuka aplikasi Google Maps atau browser di smartphone Anda.
+- **Konfigurasi API Key Gemini**: Buka file `lib/chatbot_page.dart` dan ganti `YOUR_GEMINI_API_KEY_HERE` dengan kunci API Gemini Anda yang sebenarnya dari [Google AI Studio](https://aistudio.google.com/) agar Chatbot AI dapat membalas pesan.
+

@@ -25,7 +25,7 @@ class _MidtransPageState extends State<MidtransPage> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (url) {
-            print("URL: $url");
+            debugPrint("URL: $url");
 
             if (url.contains("finish")) {
               Navigator.pop(context, true);

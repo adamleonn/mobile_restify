@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:restify/forgotPass_page.dart';
+import 'package:restify/forgot_pass_page.dart';
 import 'package:restify/signup_page.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -61,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
       final token = await RecaptchaService.getToken()
         .timeout(const Duration(seconds: 10))
         .catchError((e) {
-          print("reCAPTCHA error: $e");
+          debugPrint("reCAPTCHA error: $e");
           return null;
         });
       if (token == null) {
@@ -84,8 +84,8 @@ class _LoginPageState extends State<LoginPage> {
         }),
       );
 
-      print(response.statusCode);
-      print(response.body);
+      debugPrint(response.statusCode.toString());
+      debugPrint(response.body.toString());
 
       final data = jsonDecode(response.body);
 
@@ -120,7 +120,7 @@ class _LoginPageState extends State<LoginPage> {
           await prefs.setString('profile_picture_url', data['user']['profile_picture_url']);
         }
 
-        Navigator.pushReplacement(
+        if (!mounted) return; Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => const HomePage(),
@@ -143,7 +143,7 @@ class _LoginPageState extends State<LoginPage> {
         generalError = "Tidak dapat terhubung ke server";
       });
 
-      print(e);
+      debugPrint(e.toString());
     }
   }
   bool isObscure = true;
@@ -632,10 +632,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       boxShadow: [
                         BoxShadow(
-                          color:
-                              Colors.black.withOpacity(
-                            0.12,
-                          ),
+                          color: Colors.black.withValues(alpha: 0.12),
 
                           blurRadius: 10,
                           offset: const Offset(0, 4),

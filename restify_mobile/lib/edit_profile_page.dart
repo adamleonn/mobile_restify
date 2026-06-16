@@ -112,8 +112,8 @@ class _EditProfilePageState
       final responseBody =
           await response.stream.bytesToString();
 
-      print(response.statusCode);
-      print(responseBody);
+      debugPrint(response.statusCode.toString());
+      debugPrint(responseBody.toString());
 
       if (response.statusCode == 200) {
         final data = jsonDecode(responseBody);
@@ -143,7 +143,7 @@ class _EditProfilePageState
         }
       }
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
     }
   }
 
@@ -295,8 +295,7 @@ class _EditProfilePageState
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black
-                                  .withOpacity(
-                                      0.06),
+                                  .withValues(alpha: 0.06),
 
                               blurRadius: 10,
 
@@ -362,8 +361,7 @@ class _EditProfilePageState
                                 BoxShadow(
                                   color: Colors
                                       .black
-                                      .withOpacity(
-                                          0.08),
+                                      .withValues(alpha: 0.08),
 
                                   blurRadius: 6,
 
@@ -756,8 +754,7 @@ class _EditProfilePageState
                           color:
                               const Color(
                                       0xFF5F6F52)
-                                  .withOpacity(
-                                      0.18),
+                                  .withValues(alpha: 0.18),
 
                           blurRadius: 10,
 

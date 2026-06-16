@@ -78,9 +78,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         setState(() {
           isErrorMessage = false;
           isResetMode = true;
-          tokenController.text = (data['token'] ?? '').toString();
+          tokenController.clear();
           generalMessage =
-              "Token berhasil dibuat. Silakan buat kata sandi baru.";
+              "Kode reset password telah dikirim ke email Anda.";
         });
       } else {
         setState(() {
@@ -185,7 +185,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       final confirmPassword = confirmPasswordController.text;
 
       if (token.isEmpty) {
-        tokenError = "Token tidak boleh kosong";
+        tokenError = "Kode reset tidak boleh kosong";
       }
 
       if (password.isEmpty) {
@@ -314,8 +314,8 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   const SizedBox(height: 8),
                   Text(
                     isResetMode
-                        ? "Masukkan token dan kata sandi baru untuk akun Anda."
-                        : "Masukkan email yang terdaftar untuk membuat token reset kata sandi.",
+                        ? "Masukkan kode reset dari email dan kata sandi baru untuk akun Anda."
+                        : "Masukkan email yang terdaftar untuk menerima kode reset kata sandi.",
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
@@ -338,11 +338,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                   const SizedBox(height: 20),
                   if (isResetMode) ...[
-                    inputLabel("Token Reset"),
+                    inputLabel("Kode Reset"),
                     const SizedBox(height: 8),
                     textField(
                       controller: tokenController,
-                      hintText: "Token dari server",
+                      hintText: "Masukkan 6 digit kode dari email",
                       errorText: tokenError,
                       onChanged: (_) {
                         setState(() {
@@ -437,7 +437,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                   ] else ...[
                     primaryButton(
-                      label: "Buat Token Reset",
+                      label: "Kirim Kode Reset",
                       onPressed: validateForgotPassword,
                     ),
                   ],

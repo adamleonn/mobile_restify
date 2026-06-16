@@ -125,7 +125,7 @@ class BookingDetailPage extends StatelessWidget {
               padding: const EdgeInsets.all(22),
 
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.08),
+                color: statusColor.withValues(alpha: 0.08),
 
                 borderRadius: BorderRadius.circular(24),
 
@@ -311,58 +311,124 @@ class BookingDetailPage extends StatelessWidget {
             /// =========================
             /// BUTTON
             /// =========================
-            SizedBox(
-              width: double.infinity,
-
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text("Batalkan Booking"),
-                      content: const Text(
-                        "Apakah kamu yakin ingin membatalkan pemesanan ini?",
+            if (normalizedStatus == "upcoming" ||
+                normalizedStatus == "pending" ||
+                normalizedStatus == "confirmed")
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text("Batalkan Booking"),
+                        content: const Text(
+                          "Apakah kamu yakin ingin membatalkan pemesanan ini?",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text("Tidak"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text("Ya"),
+                          ),
+                        ],
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text("Tidak"),
-                        ),
-                        ElevatedButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text("Ya"),
-                        ),
-                      ],
+                    );
+
+                    if (confirm == true) {
+                      if (!context.mounted) return; await cancelBooking(context);
+                    }
+                  },
+                  icon: const Icon(Icons.cancel_rounded, color: Colors.white),
+                  label: const Text(
+                    "Batalkan Pemesanan",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
                     ),
-                  );
-
-                  if (confirm == true) {
-                    await cancelBooking(context);
-                  }
-                },
-
-                icon: const Icon(Icons.cancel_rounded, color: Colors.white),
-
-                label: const Text(
-                  "Batalkan Pemesanan",
-
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 232, 2, 2),
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
                   ),
                 ),
+              )
+            else if (normalizedStatus == "checked_in")
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text("Checkout"),
+                        content: const Text(
+                          "Apakah kamu yakin ingin checkout dari pesanan ini?",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text("Batal"),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text("Ya, Checkout"),
+                          ),
+                        ],
+                      ),
+                    );
 
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 232, 2, 2),
-
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
+                    if (confirm == true) {
+                      if (!context.mounted) return; await checkoutBooking(context);
+                    }
+                  },
+                  icon: const Icon(Icons.logout_rounded, color: Colors.white),
+                  label: const Text(
+                    "Checkout",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF5F6F52),
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                ),
+              )
+            else if (normalizedStatus == "completed")
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    showRatingModal(context);
+                  },
+                  icon: const Icon(Icons.star_rounded, color: Colors.white),
+                  label: const Text(
+                    "Beri Ulasan",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFB99470),
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
                   ),
                 ),
               ),
-            ),
 
             const SizedBox(height: 40),
           ],
@@ -475,5 +541,210 @@ class BookingDetailPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> checkoutBooking(BuildContext context) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.post(
+        Uri.parse(
+          'https://underwear-yeast-aching.ngrok-free.dev/api/user/checkout/$bookingId',
+        ),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Berhasil checkout. Silakan tinggalkan ulasan!"),
+            ),
+          );
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const HomePage(
+                initialIndex: 2, // Go to bookings
+              ),
+            ),
+            (route) => false,
+          );
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Gagal checkout"),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Gagal menghubungi server"),
+          ),
+        );
+      }
+    }
+  }
+
+  void showRatingModal(BuildContext context) {
+    int rating = 5;
+    TextEditingController reviewController = TextEditingController();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (BuildContext sheetContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 24,
+                right: 24,
+                top: 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Bagaimana pengalaman menginapmu?",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
+                          color: Colors.amber,
+                          size: 40,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            rating = index + 1;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: reviewController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      hintText: "Ceritakan pengalamanmu (opsional)...",
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await submitRating(
+                          context,
+                          rating,
+                          reviewController.text,
+                        );
+                        if (context.mounted) Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5F6F52),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        "Kirim Ulasan",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> submitRating(BuildContext context, int rating, String review) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.post(
+        Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/user/ratings'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: {
+          'booking_id': bookingId.toString(),
+          'rating': rating.toString(),
+          'review': review,
+        },
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Terima kasih atas ulasannya!"),
+            ),
+          );
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Gagal mengirim ulasan atau ulasan sudah ada"),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Gagal menghubungi server"),
+          ),
+        );
+      }
+    }
   }
 }

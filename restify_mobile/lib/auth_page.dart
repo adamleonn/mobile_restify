@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:restify/signup_page.dart';
 import 'package:restify/login_page.dart';
-import 'package:restify/home_page.dart';
 
 class AuthPage extends StatelessWidget {
   const AuthPage({super.key});
