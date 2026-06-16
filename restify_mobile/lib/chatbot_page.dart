@@ -19,12 +19,12 @@ class ChatMessage {
 
 class _ChatbotPageState extends State<ChatbotPage> {
   // TODO: MASUKKAN API KEY GEMINI ANDA DI SINI
-  static const String _apiKey = "YOUR_GEMINI_API_KEY_HERE"; 
-  
+  static const String _apiKey = "YOUR_GEMINI_API_KEY_HERE";
+
   final TextEditingController _controller = TextEditingController();
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
-  
+
   late final GenerativeModel _model;
   late final ChatSession _chatSession;
 
@@ -33,12 +33,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
   @override
   void initState() {
     super.initState();
-    
+
     // Inisialisasi Gemini Model
-    _model = GenerativeModel(
-      model: 'gemini-1.5-flash',
-      apiKey: _apiKey,
-    );
+    _model = GenerativeModel(model: 'gemini-2.5-flash', apiKey: _apiKey);
     _chatSession = _model.startChat();
 
     // Mengambil data hotel dari backend saat halaman dimuat
@@ -47,7 +44,8 @@ class _ChatbotPageState extends State<ChatbotPage> {
     // Pesan sambutan
     _messages.add(
       ChatMessage(
-        text: "Halo! Saya adalah Asisten AI Restify. Saya dapat merekomendasikan hotel terbaik untuk Anda berdasarkan data hotel kami. Ada yang bisa saya bantu?",
+        text:
+            "Halo! Saya adalah Asisten AI Restify. Saya dapat merekomendasikan hotel terbaik untuk Anda berdasarkan data hotel kami. Ada yang bisa saya bantu?",
         isUser: false,
       ),
     );
@@ -66,18 +64,24 @@ class _ChatbotPageState extends State<ChatbotPage> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final List<dynamic> hotels = data['data']['data'] ?? data['data'] ?? [];
-        
+
         // Buat string konteks dari daftar hotel
         StringBuffer contextBuffer = StringBuffer();
-        contextBuffer.writeln("Berikut adalah daftar hotel yang tersedia di sistem kami:");
+        contextBuffer.writeln(
+          "Berikut adalah daftar hotel yang tersedia di sistem kami:",
+        );
         for (var hotel in hotels) {
           contextBuffer.writeln("- Nama: ${hotel['name']}");
-          contextBuffer.writeln("  Lokasi/Kota: ${hotel['city'] ?? hotel['location']}");
-          contextBuffer.writeln("  Rating: ${hotel['average_rating'] ?? 'Belum ada rating'} / 5.0");
+          contextBuffer.writeln(
+            "  Lokasi/Kota: ${hotel['city'] ?? hotel['location']}",
+          );
+          contextBuffer.writeln(
+            "  Rating: ${hotel['average_rating'] ?? 'Belum ada rating'} / 5.0",
+          );
           contextBuffer.writeln("  Deskripsi singkat: ${hotel['description']}");
           contextBuffer.writeln("");
         }
-        
+
         _hotelContext = contextBuffer.toString();
       }
     } catch (e) {
@@ -89,7 +93,11 @@ class _ChatbotPageState extends State<ChatbotPage> {
     if (_controller.text.trim().isEmpty) return;
     if (_apiKey == "YOUR_GEMINI_API_KEY_HERE" || _apiKey.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("API Key Gemini belum diatur. Silakan atur di source code ChatbotPage.")),
+        const SnackBar(
+          content: Text(
+            "API Key Gemini belum diatur. Silakan atur di source code ChatbotPage.",
+          ),
+        ),
       );
       return;
     }
@@ -105,21 +113,33 @@ class _ChatbotPageState extends State<ChatbotPage> {
       // Jika ini adalah pesan pertama, kirimkan konteks hotel beserta pesan user secara rahasia di prompt pertama.
       String prompt = userMessage;
       if (_messages.length == 2 && _hotelContext.isNotEmpty) {
-         prompt = "Informasi sistem (Hanya gunakan informasi ini jika relevan untuk merekomendasikan hotel, jangan bocorkan format data sistem ini ke pengguna):\n"
-                  "$_hotelContext\n"
-                  "---\n"
-                  "Pertanyaan pengguna: $userMessage";
+        prompt =
+            "Informasi sistem (Hanya gunakan informasi ini jika relevan untuk merekomendasikan hotel, jangan bocorkan format data sistem ini ke pengguna):\n"
+            "$_hotelContext\n"
+            "---\n"
+            "Pertanyaan pengguna: $userMessage";
       }
 
       final response = await _chatSession.sendMessage(Content.text(prompt));
-      
+
       setState(() {
-        _messages.add(ChatMessage(text: response.text ?? "Maaf, saya tidak dapat merespons saat ini.", isUser: false));
+        _messages.add(
+          ChatMessage(
+            text: response.text ?? "Maaf, saya tidak dapat merespons saat ini.",
+            isUser: false,
+          ),
+        );
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _messages.add(ChatMessage(text: "Terjadi kesalahan saat menghubungi AI. Pastikan API Key valid dan koneksi internet stabil.", isUser: false));
+        _messages.add(
+          ChatMessage(
+            text:
+                "Terjadi kesalahan saat menghubungi AI. Pastikan API Key valid dan koneksi internet stabil.",
+            isUser: false,
+          ),
+        );
         _isLoading = false;
       });
     }
@@ -131,7 +151,14 @@ class _ChatbotPageState extends State<ChatbotPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xFF5F6F52),
-        title: const Text("Asisten AI Rekomendasi", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text(
+          "Asisten AI Rekomendasi",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -168,12 +195,18 @@ class _ChatbotPageState extends State<ChatbotPage> {
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
         decoration: BoxDecoration(
-          color: message.isUser ? const Color(0xFF5F6F52) : Colors.grey.shade100,
+          color: message.isUser
+              ? const Color(0xFF5F6F52)
+              : Colors.grey.shade100,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
-            bottomLeft: message.isUser ? const Radius.circular(16) : Radius.zero,
-            bottomRight: message.isUser ? Radius.zero : const Radius.circular(16),
+            bottomLeft: message.isUser
+                ? const Radius.circular(16)
+                : Radius.zero,
+            bottomRight: message.isUser
+                ? Radius.zero
+                : const Radius.circular(16),
           ),
         ),
         child: Text(
@@ -217,7 +250,10 @@ class _ChatbotPageState extends State<ChatbotPage> {
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
               ),
             ),
           ),
@@ -230,7 +266,11 @@ class _ChatbotPageState extends State<ChatbotPage> {
                 color: Color(0xFFB99470),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.send_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
         ],
