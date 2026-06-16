@@ -5,8 +5,9 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'reservation_page.dart';
 import 'image_utils.dart';
 import 'map_page.dart';
+import 'config.dart';
 
-const String _detailBaseUrl = 'https://underwear-yeast-aching.ngrok-free.dev';
+const String _detailBaseUrl = Config.baseUrl;
 
 class HotelDetailPage extends StatefulWidget {
   final int hotelId;
@@ -137,19 +138,19 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
       final item = Map<String, dynamic>.from(r);
       final rawImg = (item['image_url'] ?? '').toString();
       item['image_url'] = rawImg.startsWith('/')
-          ? 'https://underwear-yeast-aching.ngrok-free.dev$rawImg'
+          ? '$_detailBaseUrl$rawImg'
           : rawImg
-              .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
-              .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev");
+              .replaceAll("http://localhost:8000", _detailBaseUrl)
+              .replaceAll("http://127.0.0.1:8000", _detailBaseUrl);
       return item;
     }).toList();
 
     final rawHotelImg = (hotel!['image_url'] ?? '').toString();
     final imageUrl = rawHotelImg.startsWith('/')
-        ? 'https://underwear-yeast-aching.ngrok-free.dev$rawHotelImg'
+        ? '$_detailBaseUrl$rawHotelImg'
         : rawHotelImg
-            .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
-            .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev");
+            .replaceAll("http://localhost:8000", _detailBaseUrl)
+            .replaceAll("http://127.0.0.1:8000", _detailBaseUrl);
     final gallery = imageUrl.isNotEmpty ? [imageUrl] : <String>[];
 
     // Build gallery from rooms' images too
@@ -756,18 +757,18 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
 
         final sanitizedUserPic = userPic.isNotEmpty
             ? (userPic.startsWith('/')
-                ? 'https://underwear-yeast-aching.ngrok-free.dev$userPic'
+                ? '$_detailBaseUrl$userPic'
                 : userPic
-                    .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
-                    .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev"))
+                    .replaceAll("http://localhost:8000", _detailBaseUrl)
+                    .replaceAll("http://127.0.0.1:8000", _detailBaseUrl))
             : '';
 
         final sanitizedReviewImg = reviewImg.isNotEmpty
             ? (reviewImg.startsWith('/')
-                ? 'https://underwear-yeast-aching.ngrok-free.dev$reviewImg'
+                ? '$_detailBaseUrl$reviewImg'
                 : reviewImg
-                    .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
-                    .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev"))
+                    .replaceAll("http://localhost:8000", _detailBaseUrl)
+                    .replaceAll("http://127.0.0.1:8000", _detailBaseUrl))
             : '';
 
         return Container(

@@ -42,6 +42,7 @@ class _FavoritePageState extends State<FavoritePage> {
       favoriteHotelDetails.remove(hotelName);
       favoriteVersion.value++;
     });
+    saveFavorites();
   }
 
   void openHotelDetail(Map<String, dynamic> hotel) {

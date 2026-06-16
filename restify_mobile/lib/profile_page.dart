@@ -4,6 +4,7 @@ import 'login_page.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'config.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -40,7 +41,7 @@ class _ProfilePageState extends State<ProfilePage> {
       }
 
       final response = await http.get(
-        Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/profile'),
+        Uri.parse('${Config.baseUrl}/api/profile'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -105,7 +106,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (token != null) {
         await http.post(
-          Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/logout'),
+          Uri.parse('${Config.baseUrl}/api/logout'),
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',

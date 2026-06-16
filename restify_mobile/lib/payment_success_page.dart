@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'detail_booking_page.dart';
 import 'home_page.dart';
+import 'pdf_service.dart';
 
 class PaymentSuccessPage extends StatelessWidget {
   final Map<String, dynamic> hotel;
@@ -128,6 +129,47 @@ debugPrint(bookingData.toString());
               ),
 
               const Spacer(),
+
+              /// DOWNLOAD PDF BUTTON
+              SizedBox(
+                width: double.infinity,
+
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    PdfService.generateAndPrintReceipt(
+                      hotel: hotel,
+                      selectedRoom: selectedRoom,
+                      name: name,
+                      email: email,
+                      phone: phone,
+                      paymentMethod: paymentMethod,
+                      checkInDate: checkInDate,
+                      checkOutDate: checkOutDate,
+                      guest: guest,
+                      bookingCode: bookingData["payment"]?["transaction_code"] ?? "-",
+                    );
+                  },
+                  icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.white),
+                  label: const Text(
+                    "Unduh Bukti Pembayaran (PDF)",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFB99470), // elegant brown
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 14),
 
               /// DETAIL BOOKING BUTTON
               SizedBox(

@@ -3,8 +3,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'detail_hotel_page.dart';
 import 'image_utils.dart';
+import 'config.dart';
 
-const String _baseUrl = 'https://underwear-yeast-aching.ngrok-free.dev';
+const String _baseUrl = Config.baseUrl;
 
 class ListHotelPage extends StatefulWidget {
   final String city;
@@ -69,10 +70,10 @@ class _ListHotelPageState extends State<ListHotelPage> {
               'city': (h['city'] ?? '').toString(),
               'address': (h['address'] ?? '').toString(),
               'image_url': (h['image_url'] ?? '').toString().startsWith('/')
-                  ? 'https://underwear-yeast-aching.ngrok-free.dev${h['image_url']}'
+                  ? '$_baseUrl${h['image_url']}'
                   : (h['image_url'] ?? '').toString()
-                      .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
-                      .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev"),
+                      .replaceAll("http://localhost:8000", _baseUrl)
+                      .replaceAll("http://127.0.0.1:8000", _baseUrl),
               'average_rating': double.tryParse(
                     (h['average_rating'] ?? '0').toString(),
                   ) ??

@@ -1,8 +1,12 @@
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:restify/home_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'image_utils.dart';
+import 'pdf_service.dart';
+import 'config.dart';
 
 class BookingDetailPage extends StatelessWidget {
   final Map<String, dynamic> hotel;
@@ -309,6 +313,49 @@ class BookingDetailPage extends StatelessWidget {
             const SizedBox(height: 34),
 
             /// =========================
+            /// DOWNLOAD PDF RECEIPT
+            /// =========================
+            if (normalizedStatus != "cancelled" &&
+                normalizedStatus != "completed" &&
+                normalizedStatus != "checked_out") ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    PdfService.generateAndPrintReceipt(
+                      hotel: hotel,
+                      selectedRoom: selectedRoom,
+                      name: name,
+                      email: email,
+                      phone: phone,
+                      paymentMethod: paymentMethod,
+                      checkInDate: checkInDate,
+                      checkOutDate: checkOutDate,
+                      guest: guest,
+                      bookingCode: bookingCode,
+                    );
+                  },
+                  icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.white),
+                  label: const Text(
+                    "Unduh Bukti Pembayaran (PDF)",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFB99470), // elegant brown
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            /// =========================
             /// BUTTON
             /// =========================
             if (normalizedStatus == "upcoming" ||
@@ -444,7 +491,7 @@ class BookingDetailPage extends StatelessWidget {
 
       final response = await http.post(
         Uri.parse(
-          'https://underwear-yeast-aching.ngrok-free.dev/api/user/cancel-booking/$bookingId',
+          '${Config.baseUrl}/api/user/cancel-booking/$bookingId',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -550,7 +597,7 @@ class BookingDetailPage extends StatelessWidget {
 
       final response = await http.post(
         Uri.parse(
-          'https://underwear-yeast-aching.ngrok-free.dev/api/user/checkout/$bookingId',
+          '${Config.baseUrl}/api/user/checkout/$bookingId',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -599,6 +646,20 @@ class BookingDetailPage extends StatelessWidget {
   void showRatingModal(BuildContext context) {
     int rating = 5;
     TextEditingController reviewController = TextEditingController();
+    File? reviewImage;
+
+    Future<void> pickReviewImage(StateSetter modalSetState) async {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      if (pickedFile != null) {
+        modalSetState(() {
+          reviewImage = File(pickedFile.path);
+        });
+      }
+    }
 
     showModalBottomSheet(
       context: context,
@@ -617,82 +678,140 @@ class BookingDetailPage extends StatelessWidget {
                 right: 24,
                 top: 24,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Bagaimana pengalaman menginapmu?",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      return IconButton(
-                        icon: Icon(
-                          index < rating
-                              ? Icons.star_rounded
-                              : Icons.star_border_rounded,
-                          color: Colors.amber,
-                          size: 40,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            rating = index + 1;
-                          });
-                        },
-                      );
-                    }),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: reviewController,
-                    maxLines: 4,
-                    decoration: InputDecoration(
-                      hintText: "Ceritakan pengalamanmu (opsional)...",
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Bagaimana pengalaman menginapmu?",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await submitRating(
-                          context,
-                          rating,
-                          reviewController.text,
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        return IconButton(
+                          icon: Icon(
+                            index < rating
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                            color: Colors.amber,
+                            size: 40,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              rating = index + 1;
+                            });
+                          },
                         );
-                        if (context.mounted) Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF5F6F52),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
+                      }),
+                    ),
+                    const SizedBox(height: 20),
+                    TextField(
+                      controller: reviewController,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        hintText: "Ceritakan pengalamanmu (opsional)...",
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                        border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        "Kirim Ulasan",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          borderSide: BorderSide.none,
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                ],
+                    const SizedBox(height: 16),
+                    if (reviewImage != null)
+                      Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.file(
+                              reviewImage!,
+                              height: 150,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  reviewImage = null;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => pickReviewImage(setState),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF5F6F52),
+                            side: const BorderSide(color: Color(0xFF5F6F52)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          icon: const Icon(Icons.add_a_photo_rounded),
+                          label: const Text("Tambah Foto Ulasan (Opsional)"),
+                        ),
+                      ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          await submitRating(
+                            context,
+                            rating,
+                            reviewController.text,
+                            reviewImage,
+                          );
+                          if (context.mounted) Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF5F6F52),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          "Kirim Ulasan",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                  ],
+                ),
               ),
             );
           },
@@ -701,24 +820,34 @@ class BookingDetailPage extends StatelessWidget {
     );
   }
 
-  Future<void> submitRating(BuildContext context, int rating, String review) async {
+  Future<void> submitRating(BuildContext context, int rating, String review, File? image) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
-      final response = await http.post(
-        Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/user/ratings'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
-        },
-        body: {
-          'booking_id': bookingId.toString(),
-          'rating': rating.toString(),
-          'review': review,
-        },
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${Config.baseUrl}/api/user/ratings'),
       );
+
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+      request.headers['ngrok-skip-browser-warning'] = 'true';
+
+      request.fields['booking_id'] = bookingId.toString();
+      request.fields['rating'] = rating.toString();
+      request.fields['review'] = review;
+
+      if (image != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            image.path,
+          ),
+        );
+      }
+
+      final response = await request.send();
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         if (context.mounted) {

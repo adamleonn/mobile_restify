@@ -1,9 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'config.dart';
 import 'package:http/http.dart' as http;
 
-const String _baseUrl = 'https://underwear-yeast-aching.ngrok-free.dev';
+const String _baseUrl = Config.baseUrl;
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});

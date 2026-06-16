@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'config.dart';
 
 String getHotelFallbackImage(dynamic id) {
   final images = [
@@ -17,7 +18,7 @@ String getHotelFallbackImage(dynamic id) {
   } else if (id is String) {
     numId = int.tryParse(id) ?? 0;
   }
-  return 'https://underwear-yeast-aching.ngrok-free.dev/images/HotelImages/${images[numId % images.length]}';
+  return '${Config.baseUrl}/images/HotelImages/${images[numId % images.length]}';
 }
 
 String getRoomFallbackImage({dynamic roomId}) {
@@ -35,7 +36,7 @@ String getRoomFallbackImage({dynamic roomId}) {
   } else if (roomId is String) {
     numId = int.tryParse(roomId) ?? 0;
   }
-  return 'https://underwear-yeast-aching.ngrok-free.dev/images/room/${images[numId % images.length]}';
+  return '${Config.baseUrl}/images/room/${images[numId % images.length]}';
 }
 
 Widget buildNetworkImage(

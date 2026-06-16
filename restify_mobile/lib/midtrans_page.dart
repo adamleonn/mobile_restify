@@ -15,6 +15,14 @@ class MidtransPage extends StatefulWidget {
 
 class _MidtransPageState extends State<MidtransPage> {
   late final WebViewController controller;
+  bool _hasPopped = false;
+
+  void _handleFinished() {
+    if (!_hasPopped && mounted) {
+      _hasPopped = true;
+      Navigator.pop(context, true);
+    }
+  }
 
   @override
   void initState() {
@@ -24,11 +32,41 @@ class _MidtransPageState extends State<MidtransPage> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onNavigationRequest: (request) {
+            final url = request.url.toLowerCase();
+            if (url.contains("finish") ||
+                url.contains("unfinish") ||
+                url.contains("error") ||
+                url.contains("ngrok-free.dev") ||
+                url.contains("localhost") ||
+                url.contains("127.0.0.1")) {
+              _handleFinished();
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+          onPageStarted: (url) {
+            final lowerUrl = url.toLowerCase();
+            if (lowerUrl.contains("finish") ||
+                lowerUrl.contains("unfinish") ||
+                lowerUrl.contains("error") ||
+                lowerUrl.contains("ngrok-free.dev") ||
+                lowerUrl.contains("localhost") ||
+                lowerUrl.contains("127.0.0.1")) {
+              _handleFinished();
+            }
+          },
           onPageFinished: (url) {
             debugPrint("URL: $url");
 
-            if (url.contains("finish")) {
-              Navigator.pop(context, true);
+            final lowerUrl = url.toLowerCase();
+            if (lowerUrl.contains("finish") ||
+                lowerUrl.contains("unfinish") ||
+                lowerUrl.contains("error") ||
+                lowerUrl.contains("ngrok-free.dev") ||
+                lowerUrl.contains("localhost") ||
+                lowerUrl.contains("127.0.0.1")) {
+              _handleFinished();
             }
           },
         ),

@@ -3,15 +3,16 @@ import 'detail_booking_page.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'config.dart';
 
 class BookingPage extends StatefulWidget {
   const BookingPage({super.key});
 
   @override
-  State<BookingPage> createState() => _BookingPageState();
+  State<BookingPage> createState() => BookingPageState();
 }
 
-class _BookingPageState extends State<BookingPage> {
+class BookingPageState extends State<BookingPage> {
   List<dynamic> bookings = [];
 
   bool isLoading = true;
@@ -30,9 +31,12 @@ class _BookingPageState extends State<BookingPage> {
       userEmail = prefs.getString('email') ?? "-";
       userPhone = prefs.getString('phone') ?? "-";
 
+      debugPrint("FETCHING BOOKING HISTORY FOR MOBILE...");
+      debugPrint("Token: $token");
+
       final response = await http.get(
         Uri.parse(
-          'https://underwear-yeast-aching.ngrok-free.dev/api/user/booking-history',
+          '${Config.baseUrl}/api/user/booking-history',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -41,11 +45,21 @@ class _BookingPageState extends State<BookingPage> {
         },
       );
 
+      debugPrint("Booking history status code: ${response.statusCode}");
+      debugPrint("Booking history response body: ${response.body}");
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
         setState(() {
-          bookings = data['data'];
+          final dynamic rawData = data['data'];
+          if (rawData is List) {
+            bookings = rawData;
+          } else if (rawData is Map) {
+            bookings = rawData['data'] ?? [];
+          } else {
+            bookings = [];
+          }
 
           isLoading = false;
         });
@@ -55,10 +69,49 @@ class _BookingPageState extends State<BookingPage> {
         });
       }
     } catch (e) {
+      debugPrint("Error fetching booking history: $e");
       setState(() {
         isLoading = false;
       });
     }
+  }
+
+  String getFriendlyStatus(String status, String paymentStatus) {
+    if (status == 'cancelled' || paymentStatus == 'failed') {
+      return "Dibatalkan";
+    }
+    if (paymentStatus == 'pending') {
+      return "Belum Bayar";
+    }
+    if (status == 'pending') {
+      return "Menunggu Konfirmasi";
+    }
+    if (status == 'checked_in') {
+      return "Menginap";
+    }
+    if (status == 'completed') {
+      return "Selesai";
+    }
+    return "Dikonfirmasi";
+  }
+
+  Color getStatusColor(String status, String paymentStatus) {
+    if (status == 'cancelled' || paymentStatus == 'failed') {
+      return const Color(0xFFD85C5F);
+    }
+    if (paymentStatus == 'pending') {
+      return Colors.orange.shade700;
+    }
+    if (status == 'pending') {
+      return Colors.blue.shade700;
+    }
+    if (status == 'checked_in') {
+      return const Color(0xFF558B6E);
+    }
+    if (status == 'completed') {
+      return Colors.purple.shade700;
+    }
+    return const Color(0xFF5F6F52);
   }
 
   @override
@@ -95,9 +148,11 @@ class _BookingPageState extends State<BookingPage> {
   Widget build(BuildContext context) {
     final filteredBookings = bookings.where((booking) {
       final status = booking['status'];
+      final paymentStatus = booking['payment_status'];
 
       if (selectedTab == 'Upcoming') {
-        return status == 'pending' || status == 'confirmed';
+        return (status == 'pending' || status == 'confirmed') &&
+            paymentStatus != 'failed';
       }
 
       if (selectedTab == 'Completed') {
@@ -105,7 +160,7 @@ class _BookingPageState extends State<BookingPage> {
       }
 
       if (selectedTab == 'Cancelled') {
-        return status == 'cancelled';
+        return status == 'cancelled' || paymentStatus == 'failed';
       }
 
       return false;
@@ -220,32 +275,38 @@ class _BookingPageState extends State<BookingPage> {
           /// BOOKING LIST
           /// =========================
           Expanded(
-            child: filteredBookings.isEmpty
-                ? Center(
-                    child: Text(
-                      "Belum ada booking",
+            child: RefreshIndicator(
+              onRefresh: getBookingHistory,
+              color: const Color(0xFF5F6F52),
+              child: filteredBookings.isEmpty
+                  ? ListView(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.5,
+                          child: Center(
+                            child: Text(
+                              "Belum ada booking",
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                      itemCount: filteredBookings.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 14),
+                      itemBuilder: (context, index) {
+                        final booking =
+                            filteredBookings[index] as Map<String, dynamic>;
 
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-
-                        fontSize: 14,
-                      ),
+                        return bookingCard(booking: booking);
+                      },
                     ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-
-                    itemCount: filteredBookings.length,
-
-                    separatorBuilder: (_, _) => const SizedBox(height: 14),
-
-                    itemBuilder: (context, index) {
-                      final booking =
-                          filteredBookings[index] as Map<String, dynamic>;
-
-                      return bookingCard(booking: booking);
-                    },
-                  ),
+            ),
           ),
         ],
       ),
@@ -329,21 +390,14 @@ class _BookingPageState extends State<BookingPage> {
     final date = '$checkIn - $checkOut';
     final rawBookingImg = (hotelData?['image_url'] ?? '').toString();
     final image = rawBookingImg.startsWith('/')
-        ? 'https://underwear-yeast-aching.ngrok-free.dev$rawBookingImg'
+        ? '${Config.baseUrl}$rawBookingImg'
         : rawBookingImg
-            .replaceAll("http://localhost:8000", "https://underwear-yeast-aching.ngrok-free.dev")
-            .replaceAll("http://127.0.0.1:8000", "https://underwear-yeast-aching.ngrok-free.dev");
+            .replaceAll("http://localhost:8000", Config.baseUrl)
+            .replaceAll("http://127.0.0.1:8000", Config.baseUrl);
     final price = formatRupiah(booking['total_price']);
 
-    Color statusColor;
-
-    if (status == 'pending' || status == 'confirmed') {
-      statusColor = const Color(0xFF5F6F52);
-    } else if (status == 'completed' || status == 'checked_in') {
-      statusColor = const Color(0xFF5F6772);
-    } else {
-      statusColor = const Color(0xFFD85C5F);
-    }
+    final paymentStatus = (booking['payment_status'] ?? 'pending').toString();
+    final statusColor = getStatusColor(status, paymentStatus);
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -379,7 +433,7 @@ class _BookingPageState extends State<BookingPage> {
             ),
 
             child: Text(
-              status,
+              getFriendlyStatus(status, paymentStatus),
 
               style: TextStyle(
                 color: statusColor,

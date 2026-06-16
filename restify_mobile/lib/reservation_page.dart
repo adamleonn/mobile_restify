@@ -4,9 +4,10 @@ import 'payment_success_page.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'config.dart';
 import 'image_utils.dart';
 
-const String _baseUrl = 'https://underwear-yeast-aching.ngrok-free.dev';
+const String _baseUrl = Config.baseUrl;
 
 class ReservationPage extends StatefulWidget {
   final Map<String, dynamic> hotel;

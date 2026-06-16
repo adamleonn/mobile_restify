@@ -3,6 +3,7 @@ import 'package:restify/login_page.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'recaptcha_service.dart';
+import 'config.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -109,7 +110,7 @@ class _SignUpPageState
       }
 
       final response = await http.post(
-        Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/register'),
+        Uri.parse('${Config.baseUrl}/api/register'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

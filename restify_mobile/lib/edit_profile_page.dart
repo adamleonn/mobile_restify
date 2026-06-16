@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'config.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -90,7 +91,7 @@ class _EditProfilePageState
       var request = http.MultipartRequest(
         'POST',
         Uri.parse(
-          'https://underwear-yeast-aching.ngrok-free.dev/api/user/upload-profile',
+          '${Config.baseUrl}/api/user/upload-profile',
         ),
       );
 
@@ -156,7 +157,7 @@ class _EditProfilePageState
 
     try {
       final response = await http.post(
-        Uri.parse('https://underwear-yeast-aching.ngrok-free.dev/api/user/update-profile'),
+        Uri.parse('${Config.baseUrl}/api/user/update-profile'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
