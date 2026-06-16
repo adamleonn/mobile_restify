@@ -132,11 +132,12 @@ class _ChatbotPageState extends State<ChatbotPage> {
         _isLoading = false;
       });
     } catch (e) {
+      debugPrint("Error calling Gemini API: $e");
       setState(() {
         _messages.add(
           ChatMessage(
             text:
-                "Terjadi kesalahan saat menghubungi AI. Pastikan API Key valid dan koneksi internet stabil.",
+                "Terjadi kesalahan saat menghubungi AI ($e). Pastikan API Key valid dan koneksi internet stabil.",
             isUser: false,
           ),
         );

@@ -203,7 +203,7 @@ debugPrint(bookingData.toString());
                       context,
 
                       MaterialPageRoute(
-                        builder: (_) => const HomePage(initialIndex: 2),
+                        builder: (_) => const HomePage(initialIndex: 1),
                       ),
 
                       (route) => false,

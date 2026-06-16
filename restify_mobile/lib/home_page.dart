@@ -38,10 +38,6 @@ class _HomePageState extends State<HomePage> {
     pages = [
       HomeContent(key: homeKey),
 
-      const Center(
-        child: Text("AI Assistant Page", style: TextStyle(fontSize: 22)),
-      ),
-
       const BookingPage(),
 
       const FavoritePage(),
@@ -93,11 +89,6 @@ class _HomePageState extends State<HomePage> {
 
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Beranda"),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.forum_rounded),
-            label: "Smart Travel",
-          ),
 
           BottomNavigationBarItem(
             icon: Icon(Icons.assignment_rounded),

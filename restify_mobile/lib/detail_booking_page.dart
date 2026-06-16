@@ -459,7 +459,7 @@ class BookingDetailPage extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (_) => const HomePage(
-                initialIndex: 2,
+                initialIndex: 1,
               ),
             ),
             (route) => false,
@@ -570,7 +570,7 @@ class BookingDetailPage extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (_) => const HomePage(
-                initialIndex: 2, // Go to bookings
+                initialIndex: 1, // Go to bookings
               ),
             ),
             (route) => false,
