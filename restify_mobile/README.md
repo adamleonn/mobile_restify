@@ -13,7 +13,7 @@ Proyek ini dibuat untuk memenuhi bagian mobile dari **Artefak TUBES 1 Web & Mobi
 - **Pembayaran Midtrans**: Integrasi webview pembayaran Snap Midtrans Sandbox secara dinamis.
 - **Unduh E-Receipt PDF**: Membuat dan mengunduh bukti reservasi berformat PDF berkualitas tinggi menggunakan package `pdf` & `printing`.
 - **AI Chatbot (Gemini)**: Fitur rekomendasi wisata dan hotel pintar terintegrasi dengan Google Gemini AI (`gemini-2.5-flash`).
-- **Sistem Ulasan (Rating & Review)**: Berikan bintang (1-5), tulis ulasan, dan **unggah foto ulasan** langsung melalui input kamera/galeri setelah proses checkout.
+- **Sistem Ulasan (Rating & Review)**: Berikan bintang (1-5), tulis ulasan, dan **unggah foto ulasan** langsung melalui input kamera/galeri setelah proses checkout. Untuk mencegah spam rating, pengguna hanya dapat memiliki 1 ulasan per reservasi, dengan opsi untuk mengedit ulasan/rating yang telah dikirimkan kapan saja.
 
 ---
 
@@ -48,11 +48,11 @@ Agar aplikasi mobile dapat berkomunikasi dengan backend Laravel lokal Anda, Anda
      ```dart
      static const String baseUrl = 'http://192.168.x.x:8000'; // Ganti dengan IP lokal Anda
      ```
-   - **Jika menggunakan Ngrok (Direkomendasikan)**: Jika backend Anda di-expose menggunakan Ngrok:
-     ```dart
-     static const String baseUrl = 'https://your-subdomain.ngrok-free.app';
-     ```
-3. Sesuaikan `geminiApiKey` jika Anda memiliki API Key Gemini pribadi untuk AI Chatbot.
+    - **Jika menggunakan Ngrok (Direkomendasikan)**: Jika backend Anda di-expose menggunakan Ngrok:
+      ```dart
+      static const String baseUrl = 'https://your-subdomain.ngrok-free.app';
+      ```
+ 3. Sesuaikan `geminiApiKey` jika Anda memiliki API Key Gemini pribadi untuk AI Chatbot (kunci default disamarkan menggunakan Base64 runtime obfuscation untuk keamanan rilis, Anda dapat mengganti string base64 pada berkas `config.dart`).
 
 ---
 
@@ -111,4 +111,4 @@ lib/
 
 ---
 
-*Selamat menguji! Restify Mobile v2.1.0*
+*Selamat menguji! Restify Mobile v2.2.0*

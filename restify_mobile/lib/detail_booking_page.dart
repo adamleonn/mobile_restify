@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
@@ -8,9 +9,8 @@ import 'image_utils.dart';
 import 'pdf_service.dart';
 import 'config.dart';
 
-class BookingDetailPage extends StatelessWidget {
+class BookingDetailPage extends StatefulWidget {
   final Map<String, dynamic> hotel;
-
   final String selectedRoom;
   final String name;
   final String email;
@@ -19,15 +19,13 @@ class BookingDetailPage extends StatelessWidget {
   final String status;
   final String bookingCode;
   final int bookingId;
-
   final DateTime checkInDate;
   final DateTime checkOutDate;
-
   final int guest;
+  final Map<String, dynamic>? rating;
 
   const BookingDetailPage({
     super.key,
-
     required this.hotel,
     required this.selectedRoom,
     required this.name,
@@ -40,10 +38,70 @@ class BookingDetailPage extends StatelessWidget {
     required this.status,
     required this.bookingCode,
     required this.bookingId,
+    this.rating,
   });
 
   @override
+  State<BookingDetailPage> createState() => _BookingDetailPageState();
+}
+
+class _BookingDetailPageState extends State<BookingDetailPage> {
+  Map<String, dynamic>? rating;
+  String currentStatus = "";
+
+  @override
+  void initState() {
+    super.initState();
+    rating = widget.rating;
+    currentStatus = widget.status;
+    fetchBookingDetail();
+  }
+
+  Future<void> fetchBookingDetail() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final response = await http.get(
+        Uri.parse('${Config.baseUrl}/api/booking/${widget.bookingId}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        final bookingData = decoded['data'];
+        if (bookingData != null) {
+          if (mounted) {
+            setState(() {
+              rating = bookingData['rating'];
+              currentStatus = bookingData['status'] ?? widget.status;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching booking detail: $e");
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final hotel = widget.hotel;
+    final selectedRoom = widget.selectedRoom;
+    final name = widget.name;
+    final email = widget.email;
+    final phone = widget.phone;
+    final paymentMethod = widget.paymentMethod;
+    final bookingCode = widget.bookingCode;
+    final checkInDate = widget.checkInDate;
+    final checkOutDate = widget.checkOutDate;
+    final guest = widget.guest;
+    final status = currentStatus;
+
     final int roomPrice =
         int.tryParse(
           hotel["price"]
@@ -459,10 +517,13 @@ class BookingDetailPage extends StatelessWidget {
                   onPressed: () {
                     showRatingModal(context);
                   },
-                  icon: const Icon(Icons.star_rounded, color: Colors.white),
-                  label: const Text(
-                    "Beri Ulasan",
-                    style: TextStyle(
+                  icon: Icon(
+                    rating != null ? Icons.edit_rounded : Icons.star_rounded,
+                    color: Colors.white,
+                  ),
+                  label: Text(
+                    rating != null ? "Edit Ulasan" : "Beri Ulasan",
+                    style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -491,7 +552,7 @@ class BookingDetailPage extends StatelessWidget {
 
       final response = await http.post(
         Uri.parse(
-          '${Config.baseUrl}/api/user/cancel-booking/$bookingId',
+          '${Config.baseUrl}/api/user/cancel-booking/${widget.bookingId}',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -597,7 +658,7 @@ class BookingDetailPage extends StatelessWidget {
 
       final response = await http.post(
         Uri.parse(
-          '${Config.baseUrl}/api/user/checkout/$bookingId',
+          '${Config.baseUrl}/api/user/checkout/${widget.bookingId}',
         ),
         headers: {
           'Authorization': 'Bearer $token',
@@ -644,9 +705,12 @@ class BookingDetailPage extends StatelessWidget {
   }
 
   void showRatingModal(BuildContext context) {
-    int rating = 5;
-    TextEditingController reviewController = TextEditingController();
+    int ratingValue = rating != null ? (int.tryParse(rating!['rating'].toString()) ?? 5) : 5;
+    TextEditingController reviewController = TextEditingController(
+      text: rating != null ? (rating!['review'] ?? '').toString() : '',
+    );
     File? reviewImage;
+    String? existingImageUrl = rating != null && rating!['image'] != null ? rating!['image'].toString() : null;
 
     Future<void> pickReviewImage(StateSetter modalSetState) async {
       final picker = ImagePicker();
@@ -683,9 +747,9 @@ class BookingDetailPage extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Bagaimana pengalaman menginapmu?",
-                      style: TextStyle(
+                    Text(
+                      rating != null ? "Edit ulasan menginapmu" : "Bagaimana pengalaman menginapmu?",
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -696,7 +760,7 @@ class BookingDetailPage extends StatelessWidget {
                       children: List.generate(5, (index) {
                         return IconButton(
                           icon: Icon(
-                            index < rating
+                            index < ratingValue
                                 ? Icons.star_rounded
                                 : Icons.star_border_rounded,
                             color: Colors.amber,
@@ -704,7 +768,7 @@ class BookingDetailPage extends StatelessWidget {
                           ),
                           onPressed: () {
                             setState(() {
-                              rating = index + 1;
+                              ratingValue = index + 1;
                             });
                           },
                         );
@@ -762,6 +826,54 @@ class BookingDetailPage extends StatelessWidget {
                           ),
                         ],
                       )
+                    else if (existingImageUrl != null)
+                      Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network(
+                              existingImageUrl!.startsWith('http')
+                                  ? existingImageUrl!
+                                  : '${Config.baseUrl}/storage/${existingImageUrl!}',
+                              height: 150,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  height: 150,
+                                  color: Colors.grey.shade200,
+                                  child: const Center(
+                                    child: Icon(Icons.broken_image, color: Colors.grey),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  existingImageUrl = null;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.close_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
                     else
                       SizedBox(
                         width: double.infinity,
@@ -784,11 +896,13 @@ class BookingDetailPage extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () async {
+                          final bool removeImage = (existingImageUrl == null && reviewImage == null && rating != null && rating!['image'] != null);
                           await submitRating(
                             context,
-                            rating,
+                            ratingValue,
                             reviewController.text,
                             reviewImage,
+                            removeImage,
                           );
                           if (context.mounted) Navigator.pop(context);
                         },
@@ -820,7 +934,7 @@ class BookingDetailPage extends StatelessWidget {
     );
   }
 
-  Future<void> submitRating(BuildContext context, int rating, String review, File? image) async {
+  Future<void> submitRating(BuildContext context, int ratingValue, String review, File? image, bool removeImage) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -834,9 +948,12 @@ class BookingDetailPage extends StatelessWidget {
       request.headers['Accept'] = 'application/json';
       request.headers['ngrok-skip-browser-warning'] = 'true';
 
-      request.fields['booking_id'] = bookingId.toString();
-      request.fields['rating'] = rating.toString();
+      request.fields['booking_id'] = widget.bookingId.toString();
+      request.fields['rating'] = ratingValue.toString();
       request.fields['review'] = review;
+      if (removeImage) {
+        request.fields['remove_image'] = 'true';
+      }
 
       if (image != null) {
         request.files.add(
@@ -857,6 +974,7 @@ class BookingDetailPage extends StatelessWidget {
             ),
           );
         }
+        fetchBookingDetail();
       } else {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

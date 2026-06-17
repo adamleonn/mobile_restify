@@ -2,6 +2,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 class PdfService {
   // ─── Color Palette ───────────────────────────────────────────────
@@ -15,17 +16,17 @@ class PdfService {
   static final _green       = PdfColor.fromHex('#2E7D32');
   static final _greenLight  = PdfColor.fromHex('#E8F5E9');
   static final _white       = PdfColors.white;
-
+ 
   // ─── Format helpers ──────────────────────────────────────────────
   static String _formatRupiah(int value) {
     final formatter = NumberFormat.decimalPattern('id_ID');
     return 'Rp ${formatter.format(value)}';
   }
-
+ 
   static String _formatDate(DateTime dt) {
     return DateFormat('dd MMMM yyyy', 'id_ID').format(dt);
   }
-
+ 
   // ─── Main entry point ────────────────────────────────────────────
   static Future<void> generateAndPrintReceipt({
     required Map<String, dynamic> hotel,
@@ -39,6 +40,7 @@ class PdfService {
     required int guest,
     required String bookingCode,
   }) async {
+    await initializeDateFormatting('id_ID', null);
     final pdf = pw.Document();
 
     final int nights   = checkOutDate.difference(checkInDate).inDays;

@@ -556,6 +556,7 @@ class BookingPageState extends State<BookingPage> {
                               .toString(),
 
                       bookingId: booking['id'],
+                      rating: booking['rating'],
                     ),
                   ),
                 );
