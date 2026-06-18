@@ -46,4 +46,7 @@ app.*.map.json
 
 # Local configuration secrets
 /config_env.json
+/run.bat
+/.vscode/
+
 
