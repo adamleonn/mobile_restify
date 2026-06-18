@@ -66,9 +66,13 @@ class _ProfilePageState extends State<ProfilePage> {
         await prefs.setString('email', email ?? '');
         if (phone != null) {
           await prefs.setString('phone', phone!);
+        } else {
+          await prefs.remove('phone');
         }
         if (profilePictureUrl != null) {
           await prefs.setString('profile_picture_url', profilePictureUrl!);
+        } else {
+          await prefs.remove('profile_picture_url');
         }
         await prefs.setInt('id', userData['id']);
       } else if (response.statusCode == 401) {
@@ -130,6 +134,73 @@ class _ProfilePageState extends State<ProfilePage> {
       await prefs.clear();
       navigateToLogin();
     }
+  }
+
+  Future<void> deleteAccount() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF5F6F52),
+          ),
+        );
+      },
+    );
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token != null) {
+        final response = await http.delete(
+          Uri.parse('${Config.baseUrl}/api/delete-account'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (mounted) {
+          Navigator.pop(context); // Tutup dialog loading
+        }
+
+        if (response.statusCode == 200) {
+          await prefs.clear();
+          showSuccessSnackBar("Akun Anda berhasil dihapus");
+          navigateToLogin();
+        } else {
+          try {
+            final errorData = jsonDecode(response.body);
+            showErrorSnackBar(errorData['message'] ?? "Gagal menghapus akun");
+          } catch (_) {
+            showErrorSnackBar("Gagal menghapus akun (Server Error)");
+          }
+        }
+      } else {
+        if (mounted) {
+          Navigator.pop(context);
+        }
+        navigateToLogin();
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      showErrorSnackBar("Tidak dapat terhubung ke server");
+    }
+  }
+
+  void showSuccessSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF5F6F52),
+      ),
+    );
   }
 
   void navigateToLogin() {
@@ -331,6 +402,21 @@ class _ProfilePageState extends State<ProfilePage> {
                                     title: "Tentang Restify",
                                   ),
                                 ),
+
+                                const SizedBox(height: 16),
+
+                                /// HAPUS AKUN
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(18),
+                                  onTap: () {
+                                    showDeleteAccountDialog(context);
+                                  },
+                                  child: profileMenu(
+                                    icon: Icons.delete_forever_outlined,
+                                    title: "Hapus Akun",
+                                    isRed: true,
+                                  ),
+                                ),
                               ],
                             ),
 
@@ -471,6 +557,103 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     child: const Text(
                       "Keluar",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFFFFFCF7),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          title: const Text(
+            "Hapus Akun",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFE57373),
+            ),
+          ),
+          content: const Text(
+            "Apakah kamu yakin ingin menghapus akun ini secara permanen? Semua data reservasi dan riwayat pemesanan kamu akan dihapus.",
+            style: TextStyle(
+              height: 1.4,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            Row(
+              children: [
+                /// BATAL
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(
+                        color: Color(0xFF1F1F1F),
+                        width: 1,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      "Batal",
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                /// HAPUS
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context); // Tutup dialog
+                      deleteAccount(); // Panggil deleteAccount
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE57373),
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(
+                        color: Color(0xFFD85C5F),
+                        width: 1,
+                      ),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      "Hapus",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 15,

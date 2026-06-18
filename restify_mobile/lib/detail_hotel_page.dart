@@ -6,6 +6,7 @@ import 'reservation_page.dart';
 import 'image_utils.dart';
 import 'map_page.dart';
 import 'config.dart';
+import 'location_service.dart';
 
 const String _detailBaseUrl = Config.baseUrl;
 
@@ -298,7 +299,21 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Row(
+                          () {
+                          final double? hotelLat = double.tryParse(hotel!['latitude']?.toString() ?? '');
+                          final double? hotelLon = double.tryParse(hotel!['longitude']?.toString() ?? '');
+                          String? distanceStr;
+                          if (hotelLat != null && hotelLon != null && LocationService.userLatitude != null && LocationService.userLongitude != null) {
+                            final dist = LocationService.calculateDistance(
+                              LocationService.userLatitude!,
+                              LocationService.userLongitude!,
+                              hotelLat,
+                              hotelLon,
+                            );
+                            distanceStr = '${dist.toStringAsFixed(1)} km dari Anda';
+                          }
+
+                          return Row(
                             children: [
                               const Icon(
                                 Icons.location_on_rounded,
@@ -307,17 +322,41 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                               ),
                               const SizedBox(width: 4),
                               Expanded(
-                                child: Text(
-                                  hotel!['city'] ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: hotel!['city'] ?? '',
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      if (distanceStr != null) ...[
+                                        const TextSpan(
+                                          text: " • ",
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: distanceStr,
+                                          style: const TextStyle(
+                                            color: Color(0xFFFEFAE0),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
-                          ),
+                          );
+                        }(),
                         ],
                       ),
                     ),

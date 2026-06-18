@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'detail_hotel_page.dart';
 import 'image_utils.dart';
 import 'config.dart';
+import 'location_service.dart';
 
 const String _baseUrl = Config.baseUrl;
 
@@ -82,6 +83,8 @@ class _ListHotelPageState extends State<ListHotelPage> {
                     (h['lowest_price'] ?? '0').toString(),
                   ) ??
                   0.0,
+              'latitude': h['latitude']?.toString(),
+              'longitude': h['longitude']?.toString(),
             };
           }).toList()
             ..sort((a, b) =>
@@ -253,141 +256,175 @@ class _ListHotelPageState extends State<ListHotelPage> {
                                 final rating = hotel['average_rating'] as double;
                                 final imageUrl = hotel['image_url'] as String;
 
-                                return GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => HotelDetailPage(
-                                          hotelId: hotel['id'],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius:
-                                          BorderRadius.circular(22),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.06),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        /// IMAGE
-                                        ClipRRect(
-                                          borderRadius:
-                                              const BorderRadius.vertical(
-                                            top: Radius.circular(22),
-                                          ),
-                                          child: Stack(
-                                            children: [
-                                              buildNetworkImage(
-                                                imageUrl,
-                                                height: 150,
-                                                width: double.infinity,
-                                                fit: BoxFit.cover,
-                                                fallbackHotelId: hotel['id'],
-                                              ),
+                                                final double? hotelLat = double.tryParse(hotel['latitude']?.toString() ?? '');
+                                                final double? hotelLon = double.tryParse(hotel['longitude']?.toString() ?? '');
+                                                String? distanceStr;
+                                                if (hotelLat != null && hotelLon != null && LocationService.userLatitude != null && LocationService.userLongitude != null) {
+                                                  final dist = LocationService.calculateDistance(
+                                                    LocationService.userLatitude!,
+                                                    LocationService.userLongitude!,
+                                                    hotelLat,
+                                                    hotelLon,
+                                                  );
+                                                  distanceStr = '${dist.toStringAsFixed(1)} km';
+                                                }
 
-                                              /// RATING BADGE
-                                              Positioned(
-                                                top: 10,
-                                                right: 10,
-                                                child: Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20),
-                                                  ),
-                                                  child: Row(
-                                                    mainAxisSize:
-                                                        MainAxisSize.min,
-                                                    children: [
-                                                      const Icon(Icons.star,
-                                                          color: Colors.amber,
-                                                          size: 13),
-                                                      const SizedBox(width: 3),
-                                                      Text(
-                                                        rating > 0
-                                                            ? rating
-                                                                .toStringAsFixed(
-                                                                    1)
-                                                            : 'Baru',
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 11,
+                                                return GestureDetector(
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) => HotelDetailPage(
+                                                          hotelId: hotel['id'],
                                                         ),
                                                       ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-
-                                        /// CONTENT
-                                        Expanded(
-                                          child: Padding(
-                                            padding:
-                                                const EdgeInsets.all(12),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                /// NAME
-                                                Text(
-                                                  hotel['name'],
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    fontWeight:
-                                                        FontWeight.bold,
-                                                  ),
-                                                ),
-
-                                                const SizedBox(height: 6),
-
-                                                /// CITY
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                        Icons.location_on,
-                                                        size: 13,
-                                                        color: Colors.grey),
-                                                    const SizedBox(width: 3),
-                                                    Expanded(
-                                                      child: Text(
-                                                        hotel['city'],
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: TextStyle(
-                                                          color: Colors
-                                                              .grey.shade600,
-                                                          fontSize: 11,
+                                                    );
+                                                  },
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      borderRadius:
+                                                          BorderRadius.circular(22),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: Colors.black
+                                                              .withValues(alpha: 0.06),
+                                                          blurRadius: 12,
+                                                          offset: const Offset(0, 4),
                                                         ),
-                                                      ),
+                                                      ],
                                                     ),
-                                                  ],
-                                                ),
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment.start,
+                                                      children: [
+                                                        /// IMAGE
+                                                        ClipRRect(
+                                                          borderRadius:
+                                                              const BorderRadius.vertical(
+                                                            top: Radius.circular(22),
+                                                          ),
+                                                          child: Stack(
+                                                            children: [
+                                                              buildNetworkImage(
+                                                                imageUrl,
+                                                                height: 150,
+                                                                width: double.infinity,
+                                                                fit: BoxFit.cover,
+                                                                fallbackHotelId: hotel['id'],
+                                                              ),
+
+                                                              /// RATING BADGE
+                                                              Positioned(
+                                                                top: 10,
+                                                                right: 10,
+                                                                child: Container(
+                                                                  padding:
+                                                                      const EdgeInsets.symmetric(
+                                                                    horizontal: 8,
+                                                                    vertical: 4,
+                                                                  ),
+                                                                  decoration: BoxDecoration(
+                                                                    color: Colors.white,
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                            20),
+                                                                  ),
+                                                                  child: Row(
+                                                                    mainAxisSize:
+                                                                        MainAxisSize.min,
+                                                                    children: [
+                                                                      const Icon(Icons.star,
+                                                                          color: Colors.amber,
+                                                                          size: 13),
+                                                                      const SizedBox(width: 3),
+                                                                      Text(
+                                                                        rating > 0
+                                                                            ? rating
+                                                                                .toStringAsFixed(
+                                                                                    1)
+                                                                            : 'Baru',
+                                                                        style: const TextStyle(
+                                                                          fontWeight:
+                                                                              FontWeight.bold,
+                                                                          fontSize: 11,
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+
+                                                        /// CONTENT
+                                                        Expanded(
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets.all(12),
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment.start,
+                                                              children: [
+                                                                /// NAME
+                                                                Text(
+                                                                  hotel['name'],
+                                                                  maxLines: 2,
+                                                                  overflow:
+                                                                      TextOverflow.ellipsis,
+                                                                  style: const TextStyle(
+                                                                    fontSize: 13,
+                                                                    fontWeight:
+                                                                        FontWeight.bold,
+                                                                  ),
+                                                                ),
+
+                                                                const SizedBox(height: 6),
+
+                                                                /// CITY
+                                                                Row(
+                                                                  children: [
+                                                                    const Icon(
+                                                                        Icons.location_on,
+                                                                        size: 13,
+                                                                        color: Colors.grey),
+                                                                    const SizedBox(width: 3),
+                                                                    Expanded(
+                                                                      child: Text.rich(
+                                                                        TextSpan(
+                                                                          children: [
+                                                                            TextSpan(
+                                                                              text: hotel['city'],
+                                                                              style: TextStyle(
+                                                                                color: Colors.grey.shade600,
+                                                                                fontSize: 11,
+                                                                              ),
+                                                                            ),
+                                                                            if (distanceStr != null) ...[
+                                                                              TextSpan(
+                                                                                text: ' • ',
+                                                                                style: TextStyle(
+                                                                                  color: Colors.grey.shade600,
+                                                                                  fontSize: 11,
+                                                                                ),
+                                                                              ),
+                                                                              TextSpan(
+                                                                                text: distanceStr,
+                                                                                style: const TextStyle(
+                                                                                  color: Color(0xFF5F6F52),
+                                                                                  fontWeight: FontWeight.bold,
+                                                                                  fontSize: 11,
+                                                                                ),
+                                                                              ),
+                                                                            ],
+                                                                          ],
+                                                                        ),
+                                                                        overflow: TextOverflow.ellipsis,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
 
                                                 const Spacer(),
 

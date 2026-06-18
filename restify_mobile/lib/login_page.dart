@@ -115,10 +115,14 @@ class _LoginPageState extends State<LoginPage> {
 
         if (data['user']['phone'] != null) {
           await prefs.setString('phone', data['user']['phone']);
+        } else {
+          await prefs.remove('phone');
         }
         await prefs.setInt('id', data['user']['id']);
         if (data['user']['profile_picture_url'] != null) {
           await prefs.setString('profile_picture_url', data['user']['profile_picture_url']);
+        } else {
+          await prefs.remove('profile_picture_url');
         }
 
         if (!mounted) return; Navigator.pushReplacement(

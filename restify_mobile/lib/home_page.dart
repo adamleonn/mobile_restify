@@ -14,6 +14,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'config.dart';
+import 'location_service.dart';
 
 Set<String> favoriteHotels = {};
 Map<String, Map<String, dynamic>> favoriteHotelDetails = {};
@@ -162,6 +163,8 @@ class _HomeContentState extends State<HomeContent> {
   String? profilePictureUrl;
   List<Map<String, dynamic>> notifications = [];
   bool isLoadingNotifications = false;
+
+  String priceSort = "default"; // default, low_to_high, high_to_low
 
   Future<void> loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -390,6 +393,8 @@ class _HomeContentState extends State<HomeContent> {
                     (h["lowest_price"] ?? h["price"] ?? "0").toString(),
                   ) ??
                   0,
+              "latitude": h["latitude"]?.toString(),
+              "longitude": h["longitude"]?.toString(),
             };
           }).toList();
 
@@ -413,7 +418,11 @@ class _HomeContentState extends State<HomeContent> {
   void initState() {
     super.initState();
     loadUserData();
-    fetchHotels();
+    LocationService.initLocation(selectedCity).then((_) {
+      if (mounted) {
+        fetchHotels();
+      }
+    });
     fetchNotifications();
   }
 
@@ -449,14 +458,28 @@ class _HomeContentState extends State<HomeContent> {
       return matchesCity && matchesSearch;
     }).toList();
 
-    filteredHotels.sort(
-      (a, b) => a["name"].toString().compareTo(b["name"].toString()),
-    );
+    if (priceSort == "low_to_high") {
+      filteredHotels.sort((a, b) => (a["lowest_price"] as num).compareTo(b["lowest_price"] as num));
+    } else if (priceSort == "high_to_low") {
+      filteredHotels.sort((a, b) => (b["lowest_price"] as num).compareTo(a["lowest_price"] as num));
+    } else {
+      filteredHotels.sort(
+        (a, b) => a["name"].toString().compareTo(b["name"].toString()),
+      );
+    }
 
     final bool isDevelopmentCity = isCityInDevelopment(selectedCity);
 
-    final sortedHotels = [...hotels]
-      ..sort((a, b) => a["name"].toString().compareTo(b["name"].toString()));
+    final sortedHotels = [...hotels];
+    if (priceSort == "low_to_high") {
+      sortedHotels.sort((a, b) => (a["lowest_price"] as num).compareTo(b["lowest_price"] as num));
+    } else if (priceSort == "high_to_low") {
+      sortedHotels.sort((a, b) => (b["lowest_price"] as num).compareTo(a["lowest_price"] as num));
+    } else {
+      sortedHotels.sort(
+        (a, b) => a["name"].toString().compareTo(b["name"].toString()),
+      );
+    }
 
     return SafeArea(
       child: Padding(
@@ -641,7 +664,15 @@ class _HomeContentState extends State<HomeContent> {
                                 setState(() {
                                   selectedCity = value;
                                 });
-                                fetchHotels(city: value);
+                                if (!LocationService.hasGps) {
+                                  LocationService.initLocation(value).then((_) {
+                                    if (mounted) {
+                                      fetchHotels(city: value);
+                                    }
+                                  });
+                                } else {
+                                  fetchHotels(city: value);
+                                }
 
                                 if (isCityInDevelopment(value)) {
                                   Flushbar(
@@ -821,8 +852,8 @@ class _HomeContentState extends State<HomeContent> {
                             child: Container(
                               padding: const EdgeInsets.all(10),
 
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEEF3EB),
 
                                 shape: BoxShape.circle,
                               ),
@@ -868,7 +899,7 @@ class _HomeContentState extends State<HomeContent> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
 
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: const Color(0xFFEEF3EB),
 
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -891,6 +922,24 @@ class _HomeContentState extends State<HomeContent> {
                   ),
                 ),
               ),
+
+              /// SORTING SELECTOR
+              if (!isDevelopmentCity) ...[
+                const SizedBox(height: 14),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.sort_rounded, color: Color(0xFF5F6F52), size: 20),
+                      const SizedBox(width: 8),
+                      buildSortChip("low_to_high", "Harga Termurah"),
+                      const SizedBox(width: 8),
+                      buildSortChip("high_to_low", "Harga Termahal"),
+                    ],
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 24),
 
@@ -1356,6 +1405,19 @@ class _HomeContentState extends State<HomeContent> {
     required String price,
     required String rating,
   }) {
+    final double? hotelLat = double.tryParse(hotel["latitude"]?.toString() ?? "");
+    final double? hotelLon = double.tryParse(hotel["longitude"]?.toString() ?? "");
+    String? distanceStr;
+    if (hotelLat != null && hotelLon != null && LocationService.userLatitude != null && LocationService.userLongitude != null) {
+      final dist = LocationService.calculateDistance(
+        LocationService.userLatitude!,
+        LocationService.userLongitude!,
+        hotelLat,
+        hotelLon,
+      );
+      distanceStr = "${dist.toStringAsFixed(1)} km";
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1442,13 +1504,36 @@ class _HomeContentState extends State<HomeContent> {
                     const SizedBox(width: 4),
 
                     Expanded(
-                      child: Text(
-                        location,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: location,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            if (distanceStr != null) ...[
+                              const TextSpan(
+                                text: " • ",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              TextSpan(
+                                text: distanceStr,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF5F6F52),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
 
@@ -1492,6 +1577,19 @@ class _HomeContentState extends State<HomeContent> {
     required String rating,
     required String price,
   }) {
+    final double? hotelLat = double.tryParse(hotel["latitude"]?.toString() ?? "");
+    final double? hotelLon = double.tryParse(hotel["longitude"]?.toString() ?? "");
+    String? distanceStr;
+    if (hotelLat != null && hotelLon != null && LocationService.userLatitude != null && LocationService.userLongitude != null) {
+      final dist = LocationService.calculateDistance(
+        LocationService.userLatitude!,
+        LocationService.userLongitude!,
+        hotelLat,
+        hotelLon,
+      );
+      distanceStr = "${dist.toStringAsFixed(1)} km";
+    }
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
@@ -1515,24 +1613,29 @@ class _HomeContentState extends State<HomeContent> {
 
             child: buildNetworkImage(
               image,
-              height: 180,
+              height: 220,
+
               width: double.infinity,
+
               fit: BoxFit.cover,
+
               fallbackHotelId: hotel["id"],
             ),
           ),
 
           /// OVERLAY
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
 
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
 
-                end: Alignment.bottomCenter,
+                  end: Alignment.bottomCenter,
 
-                colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
+                  colors: [Colors.transparent, Colors.black.withValues(alpha: 0.75)],
+                ),
               ),
             ),
           ),
@@ -1605,10 +1708,32 @@ class _HomeContentState extends State<HomeContent> {
 
                     const SizedBox(width: 4),
 
-                    Text(
-                      location,
-
-                      style: const TextStyle(color: Colors.white70),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: location,
+                              style: const TextStyle(color: Colors.white70),
+                            ),
+                            if (distanceStr != null) ...[
+                              const TextSpan(
+                                text: " • ",
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                              TextSpan(
+                                text: distanceStr,
+                                style: const TextStyle(
+                                  color: Color(0xFFFEFAE0),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     ),
                   ],
                 ),
@@ -1694,7 +1819,7 @@ class _HomeContentState extends State<HomeContent> {
       padding: const EdgeInsets.all(16),
 
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: const Color(0xFFEEF3EB),
 
         borderRadius: BorderRadius.circular(18),
       ),
@@ -1741,6 +1866,41 @@ class _HomeContentState extends State<HomeContent> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget buildSortChip(String sortValue, String label) {
+    final isSelected = priceSort == sortValue;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (isSelected) {
+            priceSort = "default";
+          } else {
+            priceSort = sortValue;
+          }
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF5F6F52) : const Color(0xFFEEF3EB),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF5F6F52) : const Color(0xFFD0DDD0),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF5F6F52),
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

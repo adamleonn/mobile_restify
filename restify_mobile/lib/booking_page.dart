@@ -21,6 +21,7 @@ class BookingPageState extends State<BookingPage> {
   String userName = "-";
   String userEmail = "-";
   String userPhone = "-";
+  DateTime? filterDate;
 
   Future<void> getBookingHistory() async {
     try {
@@ -150,21 +151,35 @@ class BookingPageState extends State<BookingPage> {
       final status = booking['status'];
       final paymentStatus = booking['payment_status'];
 
+      bool matchesTab = false;
       if (selectedTab == 'Upcoming') {
-        return (status == 'pending' || status == 'confirmed') &&
+        matchesTab = (status == 'pending' || status == 'confirmed') &&
             paymentStatus != 'failed';
+      } else if (selectedTab == 'Completed') {
+        matchesTab = status == 'checked_in' || status == 'completed';
+      } else if (selectedTab == 'Cancelled') {
+        matchesTab = status == 'cancelled' || paymentStatus == 'failed';
       }
 
-      if (selectedTab == 'Completed') {
-        return status == 'checked_in' || status == 'completed';
+      if (!matchesTab) return false;
+
+      // Filter by check-in date
+      if (filterDate != null) {
+        final checkIn = DateTime.tryParse(booking['check_in_date'].toString());
+        if (checkIn == null) return false;
+        return checkIn.year == filterDate!.year &&
+            checkIn.month == filterDate!.month &&
+            checkIn.day == filterDate!.day;
       }
 
-      if (selectedTab == 'Cancelled') {
-        return status == 'cancelled' || paymentStatus == 'failed';
-      }
-
-      return false;
+      return true;
     }).toList();
+
+    filteredBookings.sort((a, b) {
+      final dateA = DateTime.tryParse((a['check_in_date'] ?? '').toString()) ?? DateTime.now();
+      final dateB = DateTime.tryParse((b['check_in_date'] ?? '').toString()) ?? DateTime.now();
+      return dateB.compareTo(dateA); // Default to newest check-in first
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
@@ -268,6 +283,119 @@ class BookingPageState extends State<BookingPage> {
                   ),
                 ],
               ),
+            ),
+          ),
+
+          /// =========================
+          /// FILTER BAR BY DATE
+          /// =========================
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            color: Colors.white,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.date_range_rounded, size: 18, color: Color(0xFF5F6F52)),
+                    SizedBox(width: 6),
+                    Text(
+                      "Filter Check-in:",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF5F6F52),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: filterDate ?? DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2030),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: const ColorScheme.light(
+                                  primary: Color(0xFF5F6F52),
+                                  onPrimary: Colors.white,
+                                  onSurface: Colors.black,
+                                ),
+                                textButtonTheme: TextButtonThemeData(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: const Color(0xFF5F6F52),
+                                  ),
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            filterDate = picked;
+                          });
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: filterDate != null ? const Color(0xFF5F6F52) : const Color(0xFFEEF3EB),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: filterDate != null ? const Color(0xFF5F6F52) : const Color(0xFFD0DDD0),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          filterDate != null
+                              ? "${filterDate!.day}/${filterDate!.month}/${filterDate!.year}"
+                              : "Pilih Tanggal",
+                          style: TextStyle(
+                            color: filterDate != null ? Colors.white : const Color(0xFF5F6F52),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (filterDate != null) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            filterDate = null;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFE1E1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: const Color(0xFFF0B4B4),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Text(
+                            "Reset",
+                            style: TextStyle(
+                              color: Color(0xFFE57373),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
             ),
           ),
 
@@ -599,4 +727,6 @@ class BookingPageState extends State<BookingPage> {
       ),
     );
   }
+
+  // Date Picker filter logic replaces buildDateSortChip
 }

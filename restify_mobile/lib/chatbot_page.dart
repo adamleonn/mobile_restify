@@ -6,6 +6,7 @@ import 'config.dart';
 
 class ChatbotPage extends StatefulWidget {
   static String? cachedHotelContext;
+  static List<dynamic>? cachedHotelsList;
   const ChatbotPage({super.key});
 
   @override
@@ -30,6 +31,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
   late ChatSession _chatSession;
 
   String _hotelContext = "";
+  List<dynamic> _hotelsList = [];
 
   @override
   void initState() {
@@ -78,13 +80,14 @@ class _ChatbotPageState extends State<ChatbotPage> {
     if (ChatbotPage.cachedHotelContext != null && ChatbotPage.cachedHotelContext!.isNotEmpty) {
       setState(() {
         _hotelContext = ChatbotPage.cachedHotelContext!;
+        _hotelsList = ChatbotPage.cachedHotelsList ?? [];
       });
       _initializeChat();
       return;
     }
     try {
       final response = await http.get(
-        Uri.parse('${Config.baseUrl}/api/hotels'),
+        Uri.parse('${Config.baseUrl}/api/hotels?per_page=100'),
         headers: {
           'Accept': 'application/json',
           'ngrok-skip-browser-warning': 'true',
@@ -123,7 +126,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
         }
 
         ChatbotPage.cachedHotelContext = contextBuffer.toString();
+        ChatbotPage.cachedHotelsList = hotels;
         _hotelContext = ChatbotPage.cachedHotelContext!;
+        _hotelsList = ChatbotPage.cachedHotelsList!;
 
         // Re-inisialisasi chat session dengan system instruction yang berisi data hotel lengkap
         _initializeChat();
@@ -167,11 +172,11 @@ class _ChatbotPageState extends State<ChatbotPage> {
       });
     } catch (e) {
       debugPrint("Error calling Gemini API: $e");
+      final fallbackResponse = _getFallbackAIResponse(userMessage);
       setState(() {
         _messages.add(
           ChatMessage(
-            text:
-                "Terjadi kesalahan saat menghubungi AI ($e). Pastikan API Key valid dan koneksi internet stabil.",
+            text: fallbackResponse,
             isUser: false,
           ),
         );
@@ -187,7 +192,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF5F6F52),
         title: const Text(
-          "Asisten AI Rekomendasi",
+          "Restify Asisten",
           style: TextStyle(
             color: Colors.white,
             fontSize: 18,
@@ -311,5 +316,101 @@ class _ChatbotPageState extends State<ChatbotPage> {
         ],
       ),
     );
+  }
+
+  String _getFallbackAIResponse(String message) {
+    final cleanMsg = message.toLowerCase().trim();
+
+    if (cleanMsg.isEmpty) return "Silakan ketik pesan Anda.";
+
+    // Sapaan / Greetings
+    if (cleanMsg.contains("halo") || cleanMsg.contains("hai") || cleanMsg.contains("helo") || cleanMsg.contains("hi ")) {
+      return "Halo! Saya adalah Asisten AI Restify. Ada yang bisa saya bantu hari ini?";
+    }
+
+    if (cleanMsg.contains("siapa kamu") || cleanMsg.contains("nama kamu")) {
+      return "Saya adalah Asisten AI Restify, asisten virtual pintar yang siap membantu Anda menemukan rekomendasi hotel terbaik.";
+    }
+
+    // Filter kota
+    String locationFilter = "";
+    if (cleanMsg.contains("bandung")) {
+      locationFilter = "bandung";
+    } else if (cleanMsg.contains("jakarta")) {
+      locationFilter = "jakarta";
+    }
+
+    List<dynamic> matchingHotels = _hotelsList;
+    if (locationFilter.isNotEmpty) {
+      matchingHotels = _hotelsList.where((h) {
+        final city = (h['city'] ?? h['location'] ?? h['address'] ?? '').toString().toLowerCase();
+        return city.contains(locationFilter);
+      }).toList();
+    }
+
+    if (matchingHotels.isEmpty) {
+      if (locationFilter.isNotEmpty) {
+        return "Maaf, saat ini belum ada hotel terdaftar di kota ${locationFilter[0].toUpperCase()}${locationFilter.substring(1)} pada sistem Restify.";
+      }
+      return "Maaf, saya tidak menemukan hotel yang cocok dengan kriteria tersebut pada sistem kami.";
+    }
+
+    // Cek termurah/paling murah
+    if (cleanMsg.contains("murah") || cleanMsg.contains("termurah") || cleanMsg.contains("paling murah")) {
+      final sorted = List.from(matchingHotels);
+      sorted.sort((a, b) {
+        final priceA = double.tryParse((a['lowest_price'] ?? 0).toString()) ?? 0;
+        final priceB = double.tryParse((b['lowest_price'] ?? 0).toString()) ?? 0;
+        return priceA.compareTo(priceB);
+      });
+      final cheapest = sorted.first;
+      final name = cheapest['name'] ?? cheapest['title'] ?? 'Hotel';
+      final price = cheapest['lowest_price'] ?? '0';
+      final city = cheapest['city'] ?? cheapest['location'] ?? 'Bandung';
+      return "Hotel paling murah di ${locationFilter.isNotEmpty ? locationFilter : 'sistem kami'} adalah **$name** yang berlokasi di $city. Tarifnya mulai dari Rp $price per malam.";
+    }
+
+    // Cek termahal/paling mahal
+    if (cleanMsg.contains("mahal") || cleanMsg.contains("termahal") || cleanMsg.contains("paling mahal") || cleanMsg.contains("mewah")) {
+      final sorted = List.from(matchingHotels);
+      sorted.sort((a, b) {
+        final priceA = double.tryParse((a['lowest_price'] ?? 0).toString()) ?? 0;
+        final priceB = double.tryParse((b['lowest_price'] ?? 0).toString()) ?? 0;
+        return priceB.compareTo(priceA);
+      });
+      final mostExpensive = sorted.first;
+      final name = mostExpensive['name'] ?? mostExpensive['title'] ?? 'Hotel';
+      final price = mostExpensive['lowest_price'] ?? '0';
+      final city = mostExpensive['city'] ?? mostExpensive['location'] ?? 'Bandung';
+      return "Hotel paling termahal/mewah di ${locationFilter.isNotEmpty ? locationFilter : 'sistem kami'} adalah **$name** di $city dengan harga Rp $price per malam.";
+    }
+
+    // Cek terbaik / rating tertinggi
+    if (cleanMsg.contains("rating") || cleanMsg.contains("terbaik") || cleanMsg.contains("bagus") || cleanMsg.contains("populer")) {
+      final sorted = List.from(matchingHotels);
+      sorted.sort((a, b) {
+        final ratingA = double.tryParse((a['average_rating'] ?? a['rating'] ?? 0).toString()) ?? 0;
+        final ratingB = double.tryParse((b['average_rating'] ?? b['rating'] ?? 0).toString()) ?? 0;
+        return ratingB.compareTo(ratingA);
+      });
+      final best = sorted.first;
+      final name = best['name'] ?? best['title'] ?? 'Hotel';
+      final rating = best['average_rating'] ?? best['rating'] ?? 'Belum ada rating';
+      final city = best['city'] ?? best['location'] ?? 'Bandung';
+      return "Hotel dengan rating tertinggi di ${locationFilter.isNotEmpty ? locationFilter : 'sistem kami'} adalah **$name** ($city) dengan rating **$rating / 5.0**.";
+    }
+
+    // Default: List 3 hotel teratas
+    final sb = StringBuffer();
+    sb.writeln("Berikut adalah daftar hotel yang tersedia di ${locationFilter.isNotEmpty ? locationFilter : 'Restify'}:");
+    for (var i = 0; i < matchingHotels.length && i < 3; i++) {
+      final hotel = matchingHotels[i];
+      final name = hotel['name'] ?? hotel['title'] ?? 'Hotel';
+      final city = hotel['city'] ?? hotel['location'] ?? 'Bandung';
+      final price = hotel['lowest_price'] ?? '0';
+      final rating = hotel['average_rating'] ?? hotel['rating'] ?? '4.5';
+      sb.writeln("${i + 1}. **$name** di $city - Rating: $rating/5.0, mulai Rp $price/malam.");
+    }
+    return sb.toString();
   }
 }

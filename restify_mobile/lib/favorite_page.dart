@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'detail_hotel_page.dart';
 import 'home_page.dart';
 import 'image_utils.dart';
+import 'location_service.dart';
 
 class FavoritePage extends StatefulWidget {
   const FavoritePage({super.key});
@@ -160,6 +161,19 @@ class _FavoritePageState extends State<FavoritePage> {
     required String rating,
     required String price,
   }) {
+    final double? hotelLat = double.tryParse(hotel['latitude']?.toString() ?? '');
+    final double? hotelLon = double.tryParse(hotel['longitude']?.toString() ?? '');
+    String? distanceStr;
+    if (hotelLat != null && hotelLon != null && LocationService.userLatitude != null && LocationService.userLongitude != null) {
+      final dist = LocationService.calculateDistance(
+        LocationService.userLatitude!,
+        LocationService.userLongitude!,
+        hotelLat,
+        hotelLon,
+      );
+      distanceStr = '${dist.toStringAsFixed(1)} km';
+    }
+
     return InkWell(
       borderRadius: BorderRadius.circular(18),
       onTap: () => openHotelDetail(hotel),
@@ -212,13 +226,36 @@ class _FavoritePageState extends State<FavoritePage> {
                       ),
                       const SizedBox(width: 4),
                       Expanded(
-                        child: Text(
-                          city,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 13,
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: city,
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              if (distanceStr != null) ...[
+                                TextSpan(
+                                  text: ' • ',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: distanceStr,
+                                  style: const TextStyle(
+                                    color: Color(0xFF5F6F52),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
