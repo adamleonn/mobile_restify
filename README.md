@@ -1,10 +1,10 @@
-# Mobile Restify 📱
+# Mobile Restify
 
 Ini adalah aplikasi mobile Flutter untuk Restify (Pemesanan Hotel) yang terintegrasi dengan Laravel Backend, Midtrans Payment Gateway, n8n Automation, dan Google Gemini AI.
 
 ---
 
-## ⚙️ Persyaratan Sistem (Prerequisites)
+## Persyaratan Sistem (Prerequisites)
 Sebelum menjalankan aplikasi, pastikan Anda telah menyiapkan:
 - **Flutter SDK** terpasang di komputer Anda.
 - **Backend Laravel** berjalan di lokal (menggunakan `php artisan serve`).
@@ -14,7 +14,7 @@ Sebelum menjalankan aplikasi, pastikan Anda telah menyiapkan:
 
 ---
 
-## 🚀 Panduan Cepat Menjalankan Aplikasi (Untuk Dosen / Penguji)
+## Panduan Cepat Menjalankan Aplikasi (Untuk Dosen / Penguji)
 
 Untuk memudahkan penilaian, ikuti langkah-langkah terstruktur di bawah ini secara berurutan:
 
@@ -57,7 +57,7 @@ flutter run
 
 ---
 
-## 🛠️ Panduan Detail Konfigurasi 4 Komponen Utama
+## Panduan Detail Konfigurasi 4 Komponen Utama
 
 Aplikasi ini menggunakan integrasi layanan pihak ketiga agar memiliki fitur lengkap layaknya aplikasi produksi. Berikut adalah petunjuk konfigurasi masing-masing layanan:
 
@@ -125,7 +125,7 @@ Aplikasi ini menggunakan integrasi layanan pihak ketiga agar memiliki fitur leng
 
 ---
 
-## 🤖 Asisten AI Chatbot (Gemini 2.5 Flash)
+## Asisten AI Chatbot (Gemini 2.5 Flash)
 
 Aplikasi Restify dilengkapi dengan asisten AI pintar yang merekomendasikan hotel secara interaktif berdasarkan database hotel saat ini:
 - **Model AI:** Menggunakan Google Generative AI **`gemini-2.5-flash`** untuk respon cepat dan akurat.
@@ -144,7 +144,7 @@ Aplikasi Restify dilengkapi dengan asisten AI pintar yang merekomendasikan hotel
 
 ---
 
-## 🔑 Data Akun Uji Coba Default
+## Data Akun Uji Coba Default
 Dosen dapat menggunakan kredensial berikut untuk menguji berbagai peran di platform:
 - **Akun Tamu (User / Customer)** (Dapat melakukan pencarian, favoritisasi, reservasi, pembayaran Midtrans, chatbot Gemini, unduh PDF, rating & ulasan):
   - **Email**: `user@restify.com`

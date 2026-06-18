@@ -1,4 +1,4 @@
-# Restify Mobile App 📱
+# Restify Mobile App
 
 Aplikasi Restify Mobile adalah aplikasi reservasi hotel berbasis mobile yang dibangun menggunakan **Flutter (Dart)**. Aplikasi ini terintegrasi langsung dengan API Backend Laravel 12 (Restify API) untuk menawarkan pengalaman pemesanan kamar hotel yang mulus, dilengkapi dengan AI Chatbot, payment gateway, dan fitur unduh cetak bukti pembayaran PDF secara langsung.
 
@@ -6,7 +6,7 @@ Proyek ini dibuat untuk memenuhi bagian mobile dari **Artefak TUBES 1 Web & Mobi
 
 ---
 
-## 🚀 Fitur Utama Mobile
+## Fitur Utama Mobile
 
 - **Autentikasi & Akun**: Register, Login, Lupa Password OTP (melalui webhook n8n), Edit Profil (Ganti nama, telepon, email, foto profil), dan Hapus Akun mandiri.
 - **Pencarian & Reservasi**: Jelajahi daftar hotel, filter berdasarkan kota/rating, lihat detail kamar, dan buat pesanan kamar.
@@ -17,7 +17,7 @@ Proyek ini dibuat untuk memenuhi bagian mobile dari **Artefak TUBES 1 Web & Mobi
 
 ---
 
-## ⚙️ Persyaratan Sistem (Prerequisites)
+## Persyaratan Sistem (Prerequisites)
 
 Sebelum menjalankan aplikasi, pastikan Anda telah menyiapkan:
 1. **Flutter SDK** (Versi SDK Dart yang didukung: `^3.11.0`)
@@ -29,7 +29,7 @@ Sebelum menjalankan aplikasi, pastikan Anda telah menyiapkan:
 
 ---
 
-## 🛠️ Langkah-Langkah Konfigurasi & Menjalankan Aplikasi (Untuk Dosen)
+## Langkah-Langkah Konfigurasi & Menjalankan Aplikasi (Untuk Dosen)
 
 ### Langkah 1: Kloning & Buka Project
 Buka direktori project mobile di terminal Anda:
@@ -77,7 +77,7 @@ Agar aplikasi mobile dapat berkomunikasi dengan backend Laravel lokal Anda, Anda
 
 ---
 
-## ⚙️ Detail Konfigurasi 4 Komponen Utama
+## Detail Konfigurasi 4 Komponen Utama
 
 ### 1. Terowongan Ngrok (Tunneling)
 - **Fungsi:** Menjembatani emulator/perangkat fisik dengan localhost computer yang menjalankan server backend Laravel (`port 8000`).
@@ -128,7 +128,7 @@ Agar aplikasi mobile dapat berkomunikasi dengan backend Laravel lokal Anda, Anda
 
 ---
 
-## 📁 Struktur Folder Penting (lib/)
+## Struktur Folder Penting (lib/)
 
 ```text
 lib/
@@ -154,7 +154,7 @@ lib/
 
 ---
 
-## 🔑 Data Akun Pengujian
+## Data Akun Pengujian
 - **Akun Tamu (User / Customer)** (Dapat memesan kamar, mencoba chatbot, membayar via simulator Midtrans, rating, ulasan foto, unduh PDF receipt):
   - **Email**: `user@restify.com`
   - **Password**: `User1234`
