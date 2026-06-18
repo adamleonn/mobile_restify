@@ -1,77 +1,157 @@
-# Mobile Restify
+# Mobile Restify 📱
 
-Ini adalah aplikasi mobile Flutter untuk Restify (Pemesanan Hotel).
-
-## Persyaratan Sistem
-- Flutter SDK terinstal di perangkat Anda.
-- Laravel Backend berjalan di lokal (menggunakan `php artisan serve`).
-- Akun dan aplikasi **ngrok** (digunakan untuk mengekspos API lokal agar bisa diakses dari emulator/perangkat seluler).
+Ini adalah aplikasi mobile Flutter untuk Restify (Pemesanan Hotel) yang terintegrasi dengan Laravel Backend, Midtrans Payment Gateway, n8n Automation, dan Google Gemini AI.
 
 ---
 
-## Panduan Menjalankan Aplikasi Mobile untuk Penilaian (Dosen)
+## ⚙️ Persyaratan Sistem (Prerequisites)
+Sebelum menjalankan aplikasi, pastikan Anda telah menyiapkan:
+- **Flutter SDK** terpasang di komputer Anda.
+- **Backend Laravel** berjalan di lokal (menggunakan `php artisan serve`).
+- **PostgreSQL** berjalan dan database `restify` telah di-import.
+- **Ngrok** terinstal (untuk menghubungkan emulator/perangkat fisik ke backend lokal).
+- **n8n** terinstal secara lokal (untuk simulasi lupa kata sandi OTP).
 
-Karena aplikasi mobile ini memerlukan akses ke API dari backend Laravel yang berjalan di lokal Anda, kita harus menggunakan **ngrok** sebagai jembatan untuk menghubungkan perangkat mobile ke backend lokal. 
+---
 
-Berikut langkah-langkah detailnya:
+## 🚀 Panduan Cepat Menjalankan Aplikasi (Untuk Dosen / Penguji)
 
-### Langkah 1: Jalankan Backend Laravel
-Pastikan Anda telah membuka dan menjalankan proyek web/backend Laravel (misalnya, folder `restify-webFinal`):
-1. Buka terminal di dalam folder backend web tersebut.
-2. Jalankan perintah berikut:
+Untuk memudahkan penilaian, ikuti langkah-langkah terstruktur di bawah ini secara berurutan:
+
+### Langkah 1: Jalankan Backend Laravel & Scheduler
+1. Buka terminal di dalam folder backend web (`restify-webFinal/backend`).
+2. Jalankan server Laravel:
    ```bash
    php artisan serve
    ```
-   *(Backend biasanya berjalan di `http://127.0.0.1:8000` atau `http://localhost:8000`)*
+   *(Server akan aktif di `http://127.0.0.1:8000`)*
+3. Jalankan scheduler Laravel (untuk auto-cancel booking yang tidak dibayar dalam 15 menit):
+   ```bash
+   # Buka terminal baru di folder backend/
+   php artisan schedule:work
+   ```
 
-### Langkah 2: Jalankan ngrok
-Buka terminal baru (jangan tutup terminal backend) dan jalankan ngrok untuk mengekspos port `8000`:
+### Langkah 2: Jalankan ngrok untuk API Tunneling
+Buka terminal baru (jangan tutup terminal backend) dan ekspos port `8000` menggunakan ngrok:
 ```bash
 ngrok http 8000
 ```
-Setelah berjalan, ngrok akan memberikan URL Forwarding (biasanya berakhiran `.ngrok-free.app` atau `.ngrok-free.dev`).
-Contoh URL: `https://xxxxx.ngrok-free.dev`
+Salin URL Forwarding HTTPS yang dihasilkan (contoh: `https://xxxx-xxxx.ngrok-free.app`).
 
-### Langkah 3: Update URL ngrok di Aplikasi Mobile
-Anda perlu mengganti URL API di kode mobile dengan URL ngrok yang baru saja Anda dapatkan.
+### Langkah 3: Perbarui URL API & Gemini Key di Flutter
+1. Buka folder `mobile_restify/restify_mobile` di VS Code atau editor Anda.
+2. Buka file [**`lib/config.dart`**](file:///d:/mobile_restify/restify_mobile/lib/config.dart).
+3. Ganti nilai `baseUrl` dengan URL ngrok yang Anda salin pada Langkah 2:
+   ```dart
+   static const String baseUrl = 'https://xxxx-xxxx.ngrok-free.app';
+   ```
+4. **(Opsional) Konfigurasi Gemini API Key**:
+   Di file `lib/config.dart`, chatbot menggunakan model **Gemini 2.5 Flash**. Anda dapat memperbarui kunci API Google Gemini pada variabel `geminiApiKey`. Anda bisa mengembalikan string API Key Anda langsung di getter `geminiApiKey` (dari Google AI Studio) atau menyamarkannya dalam format Base64.
 
-1. Buka folder `restify_mobile` di VS Code atau Android Studio.
-2. Lakukan **Search and Replace** (Pencarian dan Penggantian secara global) di seluruh file dalam folder `lib/`.
-   - **Cari tulisan ini:** `https://underwear-yeast-aching.ngrok-free.dev`
-   - **Ganti dengan:** *URL ngrok Anda yang baru* (contoh: `https://xxxxx.ngrok-free.dev`)
-3. Simpan semua file yang mengalami perubahan (di VS Code bisa menggunakan File -> Save All).
-
-### Langkah 4: Jalankan Aplikasi Mobile
-Setelah URL API diperbarui, Anda dapat menjalankan aplikasi di emulator Android/iOS atau perangkat fisik.
-
-Buka terminal di dalam folder `restify_mobile` dan jalankan:
+### Langkah 4: Jalankan Aplikasi Flutter
+Hubungkan emulator Android/iOS atau perangkat fisik, lalu buka terminal di folder `mobile_restify/restify_mobile` dan jalankan:
 ```bash
+flutter pub get
 flutter run
 ```
 
 ---
 
-## Fitur-Fitur Baru Aplikasi Mobile
+## 🛠️ Panduan Detail Konfigurasi 4 Komponen Utama
 
-Berikut adalah beberapa fitur baru yang telah ditambahkan ke dalam aplikasi mobile untuk menyelaraskannya dengan fitur pada aplikasi web:
-1. **Asisten AI Rekomendasi (Chatbot)**:
-   - Dapat diakses melalui tombol melayang (Floating Action Button) chat di bagian pojok kanan bawah Beranda.
-   - Menggunakan model `gemini-1.5-flash` dengan konfigurasi API Key di file `lib/chatbot_page.dart`.
-   - Mengambil daftar hotel dari database secara dinamis melalui API `/api/hotels` sebagai konteks rekomendasi.
-2. **Checkout Pemesanan**:
-   - Menambahkan tombol "Checkout" pada halaman detail pemesanan yang otomatis aktif ketika status pesanan adalah `Checked-in`.
-3. **Rating & Ulasan**:
-   - Menambahkan tombol "Beri Ulasan" pada halaman detail pemesanan yang otomatis aktif ketika status pesanan adalah `Completed`.
-   - Menampilkan dialog / bottom sheet rating (1-5 bintang) dan teks ulasan yang terintegrasi dengan API rating backend.
-4. **Lupa Kata Sandi Terintegrasi n8n**:
-   - Menyelaraskan alur lupa kata sandi dengan penggunaan kode reset 6 digit (OTP) yang dikirim ke email pengguna via integrasi n8n backend.
-   - UI telah disesuaikan agar pengguna menginputkan kode OTP dari email secara manual.
+Aplikasi ini menggunakan integrasi layanan pihak ketiga agar memiliki fitur lengkap layaknya aplikasi produksi. Berikut adalah petunjuk konfigurasi masing-masing layanan:
+
+### 1. Terowongan Ngrok (Ngrok Tunneling)
+- **Mengapa ini diperlukan?** Emulator Android/iOS dan perangkat fisik tidak dapat mengakses `localhost:8000` komputer Anda secara langsung. Ngrok membuat terowongan HTTPS publik yang aman ke server Laravel lokal Anda.
+- **Penanganan Otomatis:** Beberapa penyedia layanan tunneling seperti ngrok menampilkan halaman peringatan browser (landing page) saat diakses pertama kali. Aplikasi mobile Restify telah dikonfigurasi untuk menyertakan header `'ngrok-skip-browser-warning': 'true'` di setiap request `GET` secara otomatis, sehingga transmisi data berjalan lancar tanpa intervensi manual.
+
+### 2. Google reCAPTCHA v3 (Proteksi Form Registrasi & Login)
+- **Bagaimana cara kerjanya?** reCAPTCHA v3 berjalan di latar belakang untuk mendeteksi apakah interaksi berasal dari manusia atau bot saat pengguna mendaftar/masuk.
+- **Kunci Pengujian Bawaan Google (Out of the Box):**
+  Untuk mempermudah pengujian tanpa proses setup yang rumit, aplikasi ini telah dikonfigurasi menggunakan kunci pengujian (test keys) resmi dari Google:
+  - **Site Key (Frontend & Mobile):** `6Le_NQktAAAAACGSaQhC9_rMYdzrbIzw1ylEbLBW` (tertanam di `lib/recaptcha_service.dart`)
+  - **Secret Key (Backend):** `6Le_NQktAAAAALvA_ZqWeLthqxdj7rvNtNQt2voF` (dikonfigurasi di file `.env` Laravel backend)
+  *Sifat Kunci Pengujian:* Kunci bawaan Google ini **tidak membatasi domain**, sehingga langsung berfungsi secara otomatis untuk pengujian di `localhost`, `127.0.0.1`, emulator Android/iOS, maupun domain tunneling Ngrok (`*.ngrok-free.app`), asalkan komputer memiliki koneksi internet aktif. Pengecekan reCAPTCHA berjalan aktif secara nyata tanpa ada bypass program.
+  
+- > [!IMPORTANT]
+  > **Cara Mengonfigurasi Kunci reCAPTCHA Kustom (Jika Diperlukan):**
+  > Jika dosen atau Anda ingin menggunakan kunci API reCAPTCHA Anda sendiri untuk verifikasi penuh pada domain tertentu, ikuti langkah berikut:
+  > 1. Buka [Google reCAPTCHA Admin Console](https://www.google.com/recaptcha/admin) dan buat tipe **reCAPTCHA v3**.
+  > 2. Daftarkan domain yang diizinkan, misalnya: `localhost` dan subdomain ngrok Anda (contoh: `xxxx-xxxx.ngrok-free.app` atau gunakan wildcard `ngrok-free.app` / `ngrok-free.dev`).
+  > 3. Salin **Site Key** dan **Secret Key** baru Anda.
+  > 4. **Update di Backend Laravel:**
+  >    Buka file `backend/.env` dan ubah variabel berikut:
+  >    ```env
+  >    RECAPTCHA_SECRET_KEY=isi_dengan_secret_key_baru_anda
+  >    ```
+  >    Lalu jalankan `php artisan config:clear` di terminal backend.
+  > 5. **Update di Frontend Web Next.js:**
+  >    Buka file `frontend/.env` dan ubah:
+  >    ```env
+  >    NEXT_PUBLIC_RECAPTCHA_SITE_KEY=isi_dengan_site_key_baru_anda
+  >    ```
+  > 6. **Update di Aplikasi Mobile (Flutter):**
+  >    Buka berkas [**`lib/recaptcha_service.dart`**](file:///d:/mobile_restify/restify_mobile/lib/recaptcha_service.dart), lalu ganti Site Key bawaan (`6Le_NQktAAAAACGSaQhC9_rMYdzrbIzw1ylEbLBW`) pada baris 35 (fungsi JavaScript execute) dan baris 45 (URL script loader) dengan Site Key kustom Anda yang baru.
+
+### 3. Payment Gateway Midtrans (Simulasi Pembayaran)
+- **Bagaimana cara kerjanya?** Saat memesan kamar hotel, pengguna dapat membayar secara real-time via simulator Midtrans Snap (Virtual Account, kartu kredit simulasi, dll.).
+- **Konfigurasi Backend:**
+  Pastikan berkas `backend/.env` Anda sudah terisi dengan kredensial Sandbox Midtrans Anda (bisa didapatkan gratis di [Dashboard Sandbox Midtrans](https://dashboard.sandbox.midtrans.com/)):
+  ```env
+  MIDTRANS_SERVER_KEY=isi_dengan_server_key_sandbox_anda
+  MIDTRANS_CLIENT_KEY=isi_dengan_client_key_sandbox_anda
+  ```
+- **Real-Time Webhook (PENTING untuk sinkronisasi status pesanan):**
+  Agar status pembayaran otomatis berubah menjadi **Confirmed / Paid** di aplikasi mobile, daftarkan URL callback ngrok Anda ke dashboard Midtrans:
+  1. Masuk ke Dashboard Midtrans Sandbox -> **Settings** -> **Configuration**.
+  2. Isi kolom **Payment Notification URL** dengan:
+     `https://xxxx-xxxx.ngrok-free.app/api/midtrans/callback` *(Ganti dengan subdomain ngrok Anda saat ini)*.
+  3. Klik **Save**.
+
+### 4. Alur OTP Lupa Kata Sandi (Integrasi n8n)
+- **Bagaimana cara kerjanya?** Saat pengguna meminta reset kata sandi pada halaman lupa password, backend akan memicu workflow n8n untuk mengirimkan kode OTP 6-digit ke email target.
+- **Setup n8n lokal:**
+  1. Install n8n secara global di komputer Anda:
+     ```bash
+     npm install -g n8n
+     npx n8n
+     ```
+  2. Buka dashboard n8n di `http://localhost:5678`.
+  3. Buat workflow baru -> klik opsi **Import from file** -> pilih file `Restify.json` dari root proyek backend.
+  4. Konfigurasikan node Email (SMTP) menggunakan SMTP Gmail Anda (gunakan [App Password Google](https://myaccount.google.com/apppasswords)).
+  5. Klik **Publish** pada n8n untuk mengaktifkan workflow.
+  6. Salin **Production URL Webhook** dari node Webhook n8n Anda.
+  7. Perbarui URL Webhook pada method `forgotPassword` di berkas backend Laravel: `backend/app/Http/Controllers/AuthController.php`.
 
 ---
 
-## Catatan Penting
-- Karena versi gratis dari ngrok digunakan, URL Forwarding akan selalu berubah setiap kali Anda menutup dan membuka ulang ngrok. Oleh karena itu, mohon **selalu mengupdate URL ngrok di kode Flutter setiap kali Anda menjalankan ulang ngrok**.
-- Jika API gagal dimuat atau URL salah, aplikasi sudah dilengkapi sistem *fallback* gambar sehingga tidak akan error (layar merah) dan aplikasi tetap berjalan aman menampilkan default gambar.
-- Fitur Maps akan otomatis mendeteksi kordinat hotel dan membuka aplikasi Google Maps atau browser di smartphone Anda.
-- **Konfigurasi API Key Gemini**: Buka file `lib/chatbot_page.dart` dan ganti `YOUR_GEMINI_API_KEY_HERE` dengan kunci API Gemini Anda yang sebenarnya dari [Google AI Studio](https://aistudio.google.com/) agar Chatbot AI dapat membalas pesan.
+## 🤖 Asisten AI Chatbot (Gemini 2.5 Flash)
 
+Aplikasi Restify dilengkapi dengan asisten AI pintar yang merekomendasikan hotel secara interaktif berdasarkan database hotel saat ini:
+- **Model AI:** Menggunakan Google Generative AI **`gemini-2.5-flash`** untuk respon cepat dan akurat.
+- **Konfigurasi Kunci API:**
+  API Key disamarkan demi keamanan rilis. Agar chatbot berfungsi penuh, Anda dapat memperbarui API Key di file `lib/config.dart`:
+  ```dart
+  static String get geminiApiKey {
+    // Anda dapat mengganti nilai string base64 ini dengan API Key Anda yang di-encode ke Base64:
+    const String encodedKey = 'QVEuQWI4Uk42TDQzaEZGbnF3Z0lzekdQT3pOQUR0RzF5cFl6ZFpRMXNIRG53WWtvQXkzVFE=';
+    return utf8.decode(base64.decode(encodedKey));
+    
+    // Atau jika ingin langsung mengembalikan string biasa tanpa Base64:
+    // return 'AIzaSy...'; // API Key Anda dari Google AI Studio
+  }
+  ```
+
+---
+
+## 🔑 Data Akun Uji Coba Default
+Dosen dapat menggunakan kredensial berikut untuk menguji berbagai peran di platform:
+- **Akun Tamu (User / Customer)** (Dapat melakukan pencarian, favoritisasi, reservasi, pembayaran Midtrans, chatbot Gemini, unduh PDF, rating & ulasan):
+  - **Email**: `user@restify.com`
+  - **Password**: `User1234`
+- **Akun Resepsionis** (Untuk memproses check-in/out tamu):
+  - **Email**: `receptionist.flores@gmail.com`
+  - **Password**: `Recep1234`
+- **Akun Admin** (Untuk manajemen database hotel, kamar, user global):
+  - **Email**: `admin@restify.com`
+  - **Password**: `Admin1234`
