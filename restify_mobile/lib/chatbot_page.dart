@@ -24,6 +24,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
   String get _apiKey => Config.geminiApiKey;
 
   final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
 
@@ -32,13 +33,19 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
   String _hotelContext = "";
   List<dynamic> _hotelsList = [];
+  bool _isApiKeyValid = false;
 
   @override
   void initState() {
     super.initState();
 
+    // Validasi API Key
+    _isApiKeyValid = _apiKey.isNotEmpty && _apiKey != "YOUR_GEMINI_API_KEY_HERE";
+
     // Inisialisasi awal Gemini Model dengan petunjuk default
-    _initializeChat();
+    if (_isApiKeyValid) {
+      _initializeChat();
+    }
 
     // Mengambil data hotel dari backend saat halaman dimuat
     _fetchHotelData();
@@ -51,6 +58,38 @@ class _ChatbotPageState extends State<ChatbotPage> {
         isUser: false,
       ),
     );
+
+    // Tampilkan peringatan jika API key belum diatur
+    if (!_isApiKeyValid) {
+      _messages.add(
+        ChatMessage(
+          text:
+              "⚠️ API Key Gemini belum diatur. Saya akan menggunakan mode offline untuk menjawab pertanyaan Anda. "
+              "Untuk pengalaman yang lebih baik, jalankan aplikasi dengan:\n\n"
+              "flutter run --dart-define=GEMINI_API_KEY=<API_KEY_ANDA>",
+          isUser: false,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   void _initializeChat() {
@@ -82,7 +121,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
         _hotelContext = ChatbotPage.cachedHotelContext!;
         _hotelsList = ChatbotPage.cachedHotelsList ?? [];
       });
-      _initializeChat();
+      if (_isApiKeyValid) {
+        _initializeChat();
+      }
       return;
     }
     try {
@@ -127,11 +168,16 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
         ChatbotPage.cachedHotelContext = contextBuffer.toString();
         ChatbotPage.cachedHotelsList = hotels;
-        _hotelContext = ChatbotPage.cachedHotelContext!;
-        _hotelsList = ChatbotPage.cachedHotelsList!;
+
+        setState(() {
+          _hotelContext = ChatbotPage.cachedHotelContext!;
+          _hotelsList = ChatbotPage.cachedHotelsList!;
+        });
 
         // Re-inisialisasi chat session dengan system instruction yang berisi data hotel lengkap
-        _initializeChat();
+        if (_isApiKeyValid) {
+          _initializeChat();
+        }
       }
     } catch (e) {
       debugPrint("Gagal mengambil data hotel untuk konteks AI: $e");
@@ -140,16 +186,6 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
   Future<void> _sendMessage() async {
     if (_controller.text.trim().isEmpty) return;
-    if (_apiKey == "YOUR_GEMINI_API_KEY_HERE" || _apiKey.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "API Key Gemini belum diatur. Silakan atur di source code ChatbotPage.",
-          ),
-        ),
-      );
-      return;
-    }
 
     final userMessage = _controller.text;
     setState(() {
@@ -157,21 +193,42 @@ class _ChatbotPageState extends State<ChatbotPage> {
       _isLoading = true;
       _controller.clear();
     });
+    _scrollToBottom();
 
-    try {
-      final response = await _chatSession.sendMessage(Content.text(userMessage));
+    // Jika API key valid, gunakan Gemini AI
+    if (_isApiKeyValid) {
+      try {
+        final response = await _chatSession.sendMessage(Content.text(userMessage));
 
-      setState(() {
-        _messages.add(
-          ChatMessage(
-            text: response.text ?? "Maaf, saya tidak dapat merespons saat ini.",
-            isUser: false,
-          ),
-        );
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint("Error calling Gemini API: $e");
+        setState(() {
+          _messages.add(
+            ChatMessage(
+              text: response.text ?? "Maaf, saya tidak dapat merespons saat ini.",
+              isUser: false,
+            ),
+          );
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      } catch (e) {
+        debugPrint("Error calling Gemini API: $e");
+        // Jika Gemini gagal, gunakan fallback lokal
+        final fallbackResponse = _getFallbackAIResponse(userMessage);
+        setState(() {
+          _messages.add(
+            ChatMessage(
+              text: fallbackResponse,
+              isUser: false,
+            ),
+          );
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+    } else {
+      // Mode offline - gunakan fallback lokal
+      // Tambahkan sedikit delay agar terasa natural
+      await Future.delayed(const Duration(milliseconds: 500));
       final fallbackResponse = _getFallbackAIResponse(userMessage);
       setState(() {
         _messages.add(
@@ -182,6 +239,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
         );
         _isLoading = false;
       });
+      _scrollToBottom();
     }
   }
 
@@ -191,13 +249,27 @@ class _ChatbotPageState extends State<ChatbotPage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xFF5F6F52),
-        title: const Text(
-          "Restify Asisten",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _isApiKeyValid ? Colors.greenAccent : Colors.orange,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              "Restify Asisten",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -206,6 +278,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
         children: [
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.all(16),
               itemCount: _messages.length,
               itemBuilder: (context, index) {
@@ -215,9 +288,30 @@ class _ChatbotPageState extends State<ChatbotPage> {
             ),
           ),
           if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0),
-              child: CircularProgressIndicator(color: Color(0xFF5F6F52)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF5F6F52),
+                      strokeWidth: 2,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    _isApiKeyValid ? "Restify Asisten sedang mengetik..." : "Memproses...",
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
             ),
           _buildMessageInput(),
         ],
@@ -249,16 +343,47 @@ class _ChatbotPageState extends State<ChatbotPage> {
                 : const Radius.circular(16),
           ),
         ),
-        child: Text(
+        child: _buildRichText(
           message.text,
-          style: TextStyle(
-            color: message.isUser ? Colors.white : Colors.black87,
-            fontSize: 14,
-            height: 1.4,
-          ),
+          message.isUser ? Colors.white : Colors.black87,
         ),
       ),
     );
+  }
+
+  /// Render teks dengan dukungan **bold** markdown sederhana
+  Widget _buildRichText(String text, Color baseColor) {
+    final regex = RegExp(r'\*\*(.+?)\*\*');
+    final spans = <TextSpan>[];
+    int lastEnd = 0;
+
+    for (final match in regex.allMatches(text)) {
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(
+          text: text.substring(lastEnd, match.start),
+          style: TextStyle(color: baseColor, fontSize: 14, height: 1.4),
+        ));
+      }
+      spans.add(TextSpan(
+        text: match.group(1),
+        style: TextStyle(
+          color: baseColor,
+          fontSize: 14,
+          height: 1.4,
+          fontWeight: FontWeight.bold,
+        ),
+      ));
+      lastEnd = match.end;
+    }
+
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastEnd),
+        style: TextStyle(color: baseColor, fontSize: 14, height: 1.4),
+      ));
+    }
+
+    return RichText(text: TextSpan(children: spans));
   }
 
   Widget _buildMessageInput() {
@@ -324,7 +449,7 @@ class _ChatbotPageState extends State<ChatbotPage> {
     if (cleanMsg.isEmpty) return "Silakan ketik pesan Anda.";
 
     // Sapaan / Greetings
-    if (cleanMsg.contains("halo") || cleanMsg.contains("hai") || cleanMsg.contains("helo") || cleanMsg.contains("hi ")) {
+    if (cleanMsg.contains("halo") || cleanMsg.contains("hai") || cleanMsg.contains("helo") || cleanMsg.contains("hi ") || cleanMsg == "hi") {
       return "Halo! Saya adalah Asisten AI Restify. Ada yang bisa saya bantu hari ini?";
     }
 
@@ -332,12 +457,45 @@ class _ChatbotPageState extends State<ChatbotPage> {
       return "Saya adalah Asisten AI Restify, asisten virtual pintar yang siap membantu Anda menemukan rekomendasi hotel terbaik.";
     }
 
-    // Filter kota
+    // Penolakan topik di luar hotel
+    if (_isOutOfTopic(cleanMsg)) {
+      return "Mohon maaf, saya hanya dapat membantu Anda terkait rekomendasi dan informasi hotel di Restify. "
+          "Silakan tanyakan tentang hotel, harga kamar, lokasi, atau fasilitas hotel yang tersedia. 😊";
+    }
+
+    // Filter kota - dukung semua kota
     String locationFilter = "";
+    String locationDisplay = "";
     if (cleanMsg.contains("bandung")) {
       locationFilter = "bandung";
+      locationDisplay = "Bandung";
     } else if (cleanMsg.contains("jakarta")) {
       locationFilter = "jakarta";
+      locationDisplay = "Jakarta";
+    } else if (cleanMsg.contains("bali")) {
+      locationFilter = "bali";
+      locationDisplay = "Bali";
+    } else if (cleanMsg.contains("yogyakarta") || cleanMsg.contains("yogya") || cleanMsg.contains("jogja") || cleanMsg.contains("jogjakarta")) {
+      locationFilter = "yogyakarta";
+      locationDisplay = "Yogyakarta";
+    } else if (cleanMsg.contains("surabaya")) {
+      locationFilter = "surabaya";
+      locationDisplay = "Surabaya";
+    } else if (cleanMsg.contains("semarang")) {
+      locationFilter = "semarang";
+      locationDisplay = "Semarang";
+    } else if (cleanMsg.contains("malang")) {
+      locationFilter = "malang";
+      locationDisplay = "Malang";
+    } else if (cleanMsg.contains("lombok")) {
+      locationFilter = "lombok";
+      locationDisplay = "Lombok";
+    } else if (cleanMsg.contains("medan")) {
+      locationFilter = "medan";
+      locationDisplay = "Medan";
+    } else if (cleanMsg.contains("makassar")) {
+      locationFilter = "makassar";
+      locationDisplay = "Makassar";
     }
 
     List<dynamic> matchingHotels = _hotelsList;
@@ -350,7 +508,11 @@ class _ChatbotPageState extends State<ChatbotPage> {
 
     if (matchingHotels.isEmpty) {
       if (locationFilter.isNotEmpty) {
-        return "Maaf, saat ini belum ada hotel terdaftar di kota ${locationFilter[0].toUpperCase()}${locationFilter.substring(1)} pada sistem Restify.";
+        return "Maaf, saat ini belum ada hotel terdaftar di kota $locationDisplay pada sistem Restify. "
+            "Kami memiliki hotel di beberapa kota lain. Silakan tanyakan untuk kota lainnya! 😊";
+      }
+      if (_hotelsList.isEmpty) {
+        return "Maaf, data hotel sedang dalam proses pemuatan. Silakan coba lagi dalam beberapa saat.";
       }
       return "Maaf, saya tidak menemukan hotel yang cocok dengan kriteria tersebut pada sistem kami.";
     }
@@ -367,7 +529,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
       final name = cheapest['name'] ?? cheapest['title'] ?? 'Hotel';
       final price = cheapest['lowest_price'] ?? '0';
       final city = cheapest['city'] ?? cheapest['location'] ?? 'Bandung';
-      return "Hotel paling murah di ${locationFilter.isNotEmpty ? locationFilter : 'sistem kami'} adalah **$name** yang berlokasi di $city. Tarifnya mulai dari Rp $price per malam.";
+      return "Hotel paling murah di ${locationFilter.isNotEmpty ? locationDisplay : 'sistem kami'} adalah "
+          "**$name** yang berlokasi di $city. Tarifnya mulai dari **Rp $price** per malam. "
+          "\n\nApakah Anda ingin mengetahui detail lebih lanjut tentang hotel ini?";
     }
 
     // Cek termahal/paling mahal
@@ -382,7 +546,9 @@ class _ChatbotPageState extends State<ChatbotPage> {
       final name = mostExpensive['name'] ?? mostExpensive['title'] ?? 'Hotel';
       final price = mostExpensive['lowest_price'] ?? '0';
       final city = mostExpensive['city'] ?? mostExpensive['location'] ?? 'Bandung';
-      return "Hotel paling termahal/mewah di ${locationFilter.isNotEmpty ? locationFilter : 'sistem kami'} adalah **$name** di $city dengan harga Rp $price per malam.";
+      return "Hotel paling mewah di ${locationFilter.isNotEmpty ? locationDisplay : 'sistem kami'} adalah "
+          "**$name** di $city dengan harga mulai dari **Rp $price** per malam."
+          "\n\nApakah Anda tertarik untuk melihat detail hotel ini?";
     }
 
     // Cek terbaik / rating tertinggi
@@ -397,20 +563,67 @@ class _ChatbotPageState extends State<ChatbotPage> {
       final name = best['name'] ?? best['title'] ?? 'Hotel';
       final rating = best['average_rating'] ?? best['rating'] ?? 'Belum ada rating';
       final city = best['city'] ?? best['location'] ?? 'Bandung';
-      return "Hotel dengan rating tertinggi di ${locationFilter.isNotEmpty ? locationFilter : 'sistem kami'} adalah **$name** ($city) dengan rating **$rating / 5.0**.";
+      return "Hotel dengan rating tertinggi di ${locationFilter.isNotEmpty ? locationDisplay : 'sistem kami'} adalah "
+          "**$name** ($city) dengan rating **$rating / 5.0**."
+          "\n\nMau tahu lebih lanjut tentang hotel ini?";
     }
 
-    // Default: List 3 hotel teratas
+    // Cek pertanyaan tentang fasilitas
+    if (cleanMsg.contains("fasilitas") || cleanMsg.contains("amenities") || cleanMsg.contains("kolam") || cleanMsg.contains("wifi") || cleanMsg.contains("parkir")) {
+      return "Untuk informasi detail mengenai fasilitas hotel, silakan buka halaman detail hotel yang Anda minati. "
+          "Di sana Anda dapat melihat semua fasilitas yang tersedia."
+          "\n\nApakah Anda ingin saya merekomendasikan hotel tertentu?";
+    }
+
+    // Cek pertanyaan tentang booking/pemesanan
+    if (cleanMsg.contains("pesan") || cleanMsg.contains("booking") || cleanMsg.contains("book") || cleanMsg.contains("reservasi")) {
+      return "Untuk melakukan pemesanan, silakan pilih hotel yang Anda minati dari halaman beranda, "
+          "kemudian pilih tipe kamar dan tanggal menginap Anda. "
+          "\n\nApakah Anda ingin saya merekomendasikan hotel terlebih dahulu?";
+    }
+
+    // Ucapan terima kasih
+    if (cleanMsg.contains("terima kasih") || cleanMsg.contains("thanks") || cleanMsg.contains("makasih") || cleanMsg.contains("thx")) {
+      return "Sama-sama! Senang bisa membantu Anda. Jika ada pertanyaan lain seputar hotel, jangan ragu untuk bertanya ya! 😊";
+    }
+
+    // Default: List hotel teratas (hingga 3)
     final sb = StringBuffer();
-    sb.writeln("Berikut adalah daftar hotel yang tersedia di ${locationFilter.isNotEmpty ? locationFilter : 'Restify'}:");
-    for (var i = 0; i < matchingHotels.length && i < 3; i++) {
+    sb.writeln("Berikut adalah daftar hotel yang tersedia di ${locationFilter.isNotEmpty ? locationDisplay : 'Restify'}:\n");
+    final showCount = matchingHotels.length < 3 ? matchingHotels.length : 3;
+    for (var i = 0; i < showCount; i++) {
       final hotel = matchingHotels[i];
       final name = hotel['name'] ?? hotel['title'] ?? 'Hotel';
       final city = hotel['city'] ?? hotel['location'] ?? 'Bandung';
       final price = hotel['lowest_price'] ?? '0';
-      final rating = hotel['average_rating'] ?? hotel['rating'] ?? '4.5';
-      sb.writeln("${i + 1}. **$name** di $city - Rating: $rating/5.0, mulai Rp $price/malam.");
+      final rating = hotel['average_rating'] ?? hotel['rating'] ?? '-';
+      sb.writeln("${i + 1}. **$name** di $city");
+      sb.writeln("   Rating: $rating/5.0 | Mulai Rp $price/malam\n");
     }
+    if (matchingHotels.length > 3) {
+      sb.writeln("...dan ${matchingHotels.length - 3} hotel lainnya.");
+    }
+    sb.writeln("\nApakah Anda ingin informasi lebih detail tentang salah satu hotel di atas?");
     return sb.toString();
+  }
+
+  /// Cek apakah pesan di luar topik hotel
+  bool _isOutOfTopic(String cleanMsg) {
+    final outOfTopicKeywords = [
+      "resep", "masak", "kode", "code", "programming", "matematika", "hitung",
+      "cuaca", "berita", "politik", "olahraga", "sepak bola", "musik", "film",
+      "game", "coding", "javascript", "python", "flutter", "java", "php",
+      "translate", "terjemah", "curhat", "galau", "pacar",
+    ];
+    for (final keyword in outOfTopicKeywords) {
+      if (cleanMsg.contains(keyword)) {
+        // Pastikan bukan konteks hotel (contoh: "fasilitas game room")
+        if (cleanMsg.contains("hotel") || cleanMsg.contains("kamar") || cleanMsg.contains("restify")) {
+          return false;
+        }
+        return true;
+      }
+    }
+    return false;
   }
 }

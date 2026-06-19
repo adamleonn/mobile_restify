@@ -114,6 +114,7 @@ class _SignUpPageState
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({
           'name': nameController.text.trim(),

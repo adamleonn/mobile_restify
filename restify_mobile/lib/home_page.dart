@@ -332,7 +332,7 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   bool isCityInDevelopment(String city) {
-    return city != "Bandung" && city != "Jakarta";
+    return false;
   }
 
   Future<void> fetchHotels({String? city}) async {
@@ -418,12 +418,28 @@ class _HomeContentState extends State<HomeContent> {
   void initState() {
     super.initState();
     loadUserData();
-    LocationService.initLocation(selectedCity).then((_) {
-      if (mounted) {
-        fetchHotels();
-      }
-    });
+    loadSelectedCity();
     fetchNotifications();
+  }
+
+  Future<void> loadSelectedCity() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedCity = prefs.getString('selected_city');
+      if (savedCity != null && cities.contains(savedCity)) {
+        setState(() {
+          selectedCity = savedCity;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading selected city: $e");
+    } finally {
+      LocationService.initLocation(selectedCity).then((_) {
+        if (mounted) {
+          fetchHotels();
+        }
+      });
+    }
   }
 
   bool get isSearchActive => searchQuery.trim().isNotEmpty;
@@ -659,11 +675,17 @@ class _HomeContentState extends State<HomeContent> {
                                   );
                                 }).toList();
                               },
-                              onChanged: (value) {
+                              onChanged: (value) async {
                                 if (value == null) return;
                                 setState(() {
                                   selectedCity = value;
                                 });
+                                try {
+                                  final prefs = await SharedPreferences.getInstance();
+                                  await prefs.setString('selected_city', value);
+                                } catch (e) {
+                                  debugPrint("Error saving selected city: $e");
+                                }
                                 if (!LocationService.hasGps) {
                                   LocationService.initLocation(value).then((_) {
                                     if (mounted) {
@@ -675,6 +697,7 @@ class _HomeContentState extends State<HomeContent> {
                                 }
 
                                 if (isCityInDevelopment(value)) {
+                                  if (!context.mounted) return;
                                   Flushbar(
                                     flushbarPosition: FlushbarPosition.BOTTOM,
                                     margin: const EdgeInsets.all(20),
@@ -1613,7 +1636,7 @@ class _HomeContentState extends State<HomeContent> {
 
             child: buildNetworkImage(
               image,
-              height: 220,
+              height: double.infinity,
 
               width: double.infinity,
 

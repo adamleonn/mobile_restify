@@ -165,9 +165,17 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
     final selectedRoom = selectedRoomId != null
         ? rooms.firstWhere(
             (r) => r['id'] == selectedRoomId,
-            orElse: () => rooms.isNotEmpty ? rooms.first : {},
+            orElse: () => rooms.isNotEmpty
+                ? rooms.firstWhere((r) => r['status'] != 'maintenance',
+                    orElse: () => rooms.first)
+                : {},
           )
-        : (rooms.isNotEmpty ? rooms.first : <String, dynamic>{});
+        : (rooms.isNotEmpty
+            ? rooms.firstWhere((r) => r['status'] != 'maintenance',
+                orElse: () => rooms.first)
+            : <String, dynamic>{});
+
+    final bool isSelectedRoomMaintenance = selectedRoom['status'] == 'maintenance';
 
     final mapsLat = hotel!['latitude'];
     final mapsLng = hotel!['longitude'];
@@ -446,50 +454,97 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                                 room['id'] == selectedRoomId;
                             final roomImage = (room['image_url'] ?? '')
                                 .toString();
+                            final bool isMaintenance = room['status'] == 'maintenance';
                             return GestureDetector(
-                              onTap: () =>
-                                  setState(() => selectedRoomId = room['id']),
+                              onTap: isMaintenance
+                                  ? () {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            "Kamar ini sedang dalam pemeliharaan (maintenance) dan tidak dapat dipesan.",
+                                          ),
+                                          backgroundColor: Color(0xFFE57373),
+                                        ),
+                                      );
+                                    }
+                                  : () => setState(() => selectedRoomId = room['id']),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 250),
                                 margin: const EdgeInsets.only(bottom: 16),
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? const Color(0xFFFEFAE0)
-                                      : Colors.white,
+                                  color: isMaintenance
+                                      ? Colors.grey.shade50
+                                      : (isSelected
+                                          ? const Color(0xFFFEFAE0)
+                                          : Colors.white),
                                   borderRadius: BorderRadius.circular(24),
                                   border: Border.all(
-                                    color: isSelected
-                                        ? const Color(0xFF5F6F52)
-                                        : Colors.grey.shade300,
+                                    color: isMaintenance
+                                        ? Colors.grey.shade200
+                                        : (isSelected
+                                            ? const Color(0xFF5F6F52)
+                                            : Colors.grey.shade300),
                                   ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(18),
-                                      child: buildNetworkImage(
-                                        roomImage,
-                                        width: 110,
-                                        height: 100,
-                                        fit: BoxFit.cover,
-                                        fallbackRoomId: room['id'],
-                                        isRoom: true,
+                                child: Opacity(
+                                  opacity: isMaintenance ? 0.55 : 1.0,
+                                  child: Row(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(18),
+                                        child: buildNetworkImage(
+                                          roomImage,
+                                          width: 110,
+                                          height: 100,
+                                          fit: BoxFit.cover,
+                                          fallbackRoomId: room['id'],
+                                          isRoom: true,
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            room['room_type'] ?? '-',
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              room['room_type'] ?? '-',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
-                                          ),
+                                            if (isMaintenance) ...[
+                                              const SizedBox(height: 4),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFFFE1E1),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(color: const Color(0xFFF0B4B4)),
+                                                ),
+                                                child: const Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.construction_rounded,
+                                                      color: Color(0xFFE57373),
+                                                      size: 13,
+                                                    ),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      "Sedang Maintenance",
+                                                      style: TextStyle(
+                                                        color: Color(0xFFE57373),
+                                                        fontSize: 10,
+                                                        fontWeight: FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                           const SizedBox(height: 4),
                                           Text(
                                             'Kapasitas: ${room['capacity'] ?? '-'} tamu',
@@ -528,6 +583,7 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                                       ),
                                     ),
                                   ],
+                                ),
                                 ),
                               ),
                             );
@@ -641,32 +697,36 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ReservationPage(
-                              hotel: {
-                                'id': hotel!['id'],
-                                'image': imageUrl,
-                                'image_url': imageUrl,
-                                'title': hotel!['name'] ?? '',
-                                'name': hotel!['name'] ?? '',
-                                'location': hotel!['city'] ?? '',
-                                'city': hotel!['city'] ?? '',
-                                'price': formatPrice(selectedRoom['price']),
-                                'room_id': selectedRoom['id'],
-                                'room_type': selectedRoom['room_type'] ?? '',
-                                'room_capacity': selectedRoom['capacity'],
-                              },
-                              selectedRoom:
-                                  selectedRoom['room_type'] ?? 'Kamar',
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: isSelectedRoomMaintenance
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => ReservationPage(
+                                    hotel: {
+                                      'id': hotel!['id'],
+                                      'image': imageUrl,
+                                      'image_url': imageUrl,
+                                      'title': hotel!['name'] ?? '',
+                                      'name': hotel!['name'] ?? '',
+                                      'location': hotel!['city'] ?? '',
+                                      'city': hotel!['city'] ?? '',
+                                      'price': formatPrice(selectedRoom['price']),
+                                      'room_id': selectedRoom['id'],
+                                      'room_type': selectedRoom['room_type'] ?? '',
+                                      'room_capacity': selectedRoom['capacity'],
+                                    },
+                                    selectedRoom:
+                                        selectedRoom['room_type'] ?? 'Kamar',
+                                  ),
+                                ),
+                              );
+                            },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF5F6F52),
+                        backgroundColor: isSelectedRoomMaintenance
+                            ? Colors.grey.shade400
+                            : const Color(0xFF5F6F52),
                         padding: const EdgeInsets.symmetric(
                           horizontal: 26,
                           vertical: 16,
@@ -675,10 +735,12 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                           borderRadius: BorderRadius.circular(18),
                         ),
                       ),
-                      child: const Text(
-                        'Pesan',
+                      child: Text(
+                        isSelectedRoomMaintenance ? 'Maintenance' : 'Pesan',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: isSelectedRoomMaintenance
+                              ? Colors.white54
+                              : Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),

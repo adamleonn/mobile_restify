@@ -155,3 +155,19 @@ Dosen dapat menggunakan kredensial berikut untuk menguji berbagai peran di platf
 - **Akun Admin** (Untuk manajemen database hotel, kamar, user global):
   - **Email**: `admin@restify.com`
   - **Password**: `Admin1234`
+
+---
+
+## Changelog Terbaru
+
+### v2.3.0 — Juni 2026 (Peningkatan UX, Fitur Keamanan, & Dukungan Multi-Kota)
+- **Penyimpanan Kota Terpilih (City Persistence)**: Mengintegrasikan `SharedPreferences` pada halaman beranda (`home_page.dart`) agar kota pilihan pengguna tetap tersimpan ketika aplikasi dimuat ulang atau dibuka kembali.
+- **Relokasi & Keamanan Fitur Hapus Akun**: Memindahkan tombol "Hapus Akun" dari halaman profil utama ke bagian bawah form edit profil (`edit_profile_page.dart`) untuk mencegah ketidaksengajaan klik. Menambahkan layout scrollable untuk menghindari layout overflow akibat munculnya keyboard virtual.
+- **Visualisasi Status Kamar Maintenance**: Menampilkan status kamar pemeliharaan secara visual terproteksi (greyed-out), lencana merah "Sedang Maintenance", serta memblokir fungsi klik booking kamar tersebut dengan notifikasi pesan SnackBar.
+- **Dukungan Multi-Kota Penuh**: Membuka batasan pengembangan kota Bali dan Yogyakarta pada deteksi kota sehingga pengguna dapat menelusuri hotel di wilayah tersebut serta berinteraksi secara penuh dengan Chatbot Gemini.
+- **Fix Masalah Lifecycle Redirect**: Memperbaiki issue crash navigasi pada widget `IndexedStack` saat token otentikasi kedaluwarsa dengan membungkus rutinitas redirect dalam callback `addPostFrameCallback`.
+- **Header Bypass Ngrok**: Menyertakan header `'ngrok-skip-browser-warning': 'true'` pada semua HTTP request autentikasi (login, register, profil) untuk menghindari kegagalan parser respons akibat halaman peringatan ngrok.
+
+---
+
+*Dibuat untuk TUBES Mobile — Restify v2.3.0*

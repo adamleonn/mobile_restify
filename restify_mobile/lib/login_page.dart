@@ -77,6 +77,7 @@ class _LoginPageState extends State<LoginPage> {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
         },
         body: jsonEncode({
           'email': email,
