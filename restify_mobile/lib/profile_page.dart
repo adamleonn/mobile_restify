@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'config.dart';
+import 'home_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -147,6 +148,9 @@ class _ProfilePageState extends State<ProfilePage> {
       }
 
       await prefs.clear();
+      favoriteHotels.clear();
+      favoriteHotelDetails.clear();
+      favoriteVersion.value++;
 
       if (mounted) {
         Navigator.pop(context); // Tutup dialog loading
@@ -159,6 +163,9 @@ class _ProfilePageState extends State<ProfilePage> {
       // Tetap bersihkan session lokal & logout jika request gagal
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
+      favoriteHotels.clear();
+      favoriteHotelDetails.clear();
+      favoriteVersion.value++;
       navigateToLogin();
     }
   }

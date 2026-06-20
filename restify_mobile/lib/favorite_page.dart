@@ -37,13 +37,11 @@ class _FavoritePageState extends State<FavoritePage> {
     return 'Rp ${result.toString()}';
   }
 
-  void removeFavorite(String hotelName) {
-    setState(() {
-      favoriteHotels.remove(hotelName);
-      favoriteHotelDetails.remove(hotelName);
-      favoriteVersion.value++;
-    });
-    saveFavorites();
+  void removeFavorite(Map<String, dynamic> hotel) async {
+    await toggleFavoriteAPI(hotel);
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void openHotelDetail(Map<String, dynamic> hotel) {
@@ -287,7 +285,7 @@ class _FavoritePageState extends State<FavoritePage> {
             ),
             const SizedBox(width: 8),
             IconButton(
-              onPressed: () => removeFavorite(name),
+              onPressed: () => removeFavorite(hotel),
               icon: const Icon(Icons.favorite, color: Colors.red),
               tooltip: "Hapus dari favorit",
             ),

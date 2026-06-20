@@ -23,30 +23,109 @@ ValueNotifier<int> favoriteVersion = ValueNotifier<int>(0);
 Future<void> loadFavorites() async {
   try {
     final prefs = await SharedPreferences.getInstance();
-    final List<String>? hotelList = prefs.getStringList('favoriteHotels');
-    final String? detailsJson = prefs.getString('favoriteHotelDetails');
-    if (hotelList != null) {
-      favoriteHotels = hotelList.toSet();
+    final token = prefs.getString('token');
+    if (token == null) {
+      favoriteHotels = {};
+      favoriteHotelDetails = {};
+      favoriteVersion.value++;
+      return;
     }
-    if (detailsJson != null) {
-      final Map<String, dynamic> decoded = jsonDecode(detailsJson);
-      favoriteHotelDetails = decoded.map((key, value) {
-        return MapEntry(key, Map<String, dynamic>.from(value as Map));
-      });
+
+    final response = await http.get(
+      Uri.parse('${Config.baseUrl}/api/user/favorites'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'ngrok-skip-browser-warning': 'true',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      favoriteHotels = data.map((h) => (h['name'] ?? '').toString()).toSet();
+      favoriteHotelDetails = {
+        for (var h in data) (h['name'] ?? '').toString(): Map<String, dynamic>.from(h)
+      };
+      favoriteVersion.value++;
+    } else {
+      debugPrint("Failed to load favorites from server: ${response.statusCode}");
     }
-    favoriteVersion.value++;
   } catch (e) {
     debugPrint("Error loading favorites: $e");
   }
 }
 
 Future<void> saveFavorites() async {
+  // Deprecated: now persisted in backend database
+}
+
+Future<void> toggleFavoriteAPI(Map<String, dynamic> hotel) async {
+  final hotelName = (hotel["name"] ?? "").toString();
+  if (hotelName.isEmpty) return;
+
+  final isFav = favoriteHotels.contains(hotelName);
+
+  // Optimistic UI Update
+  if (isFav) {
+    favoriteHotels.remove(hotelName);
+    favoriteHotelDetails.remove(hotelName);
+  } else {
+    favoriteHotels.add(hotelName);
+    favoriteHotelDetails[hotelName] = Map<String, dynamic>.from(hotel);
+  }
+  favoriteVersion.value++;
+
   try {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('favoriteHotels', favoriteHotels.toList());
-    await prefs.setString('favoriteHotelDetails', jsonEncode(favoriteHotelDetails));
+    final token = prefs.getString('token');
+    if (token == null) return;
+
+    final response = await http.post(
+      Uri.parse('${Config.baseUrl}/api/user/favorites/toggle'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'ngrok-skip-browser-warning': 'true',
+      },
+      body: jsonEncode({
+        'hotel_id': hotel['id'],
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final bool isFavorite = data['is_favorite'] ?? false;
+      if (isFavorite) {
+        favoriteHotels.add(hotelName);
+        favoriteHotelDetails[hotelName] = Map<String, dynamic>.from(hotel);
+      } else {
+        favoriteHotels.remove(hotelName);
+        favoriteHotelDetails.remove(hotelName);
+      }
+      favoriteVersion.value++;
+    } else {
+      // Revert optimistic update
+      if (isFav) {
+        favoriteHotels.add(hotelName);
+        favoriteHotelDetails[hotelName] = Map<String, dynamic>.from(hotel);
+      } else {
+        favoriteHotels.remove(hotelName);
+        favoriteHotelDetails.remove(hotelName);
+      }
+      favoriteVersion.value++;
+    }
   } catch (e) {
-    debugPrint("Error saving favorites: $e");
+    // Revert optimistic update
+    if (isFav) {
+      favoriteHotels.add(hotelName);
+      favoriteHotelDetails[hotelName] = Map<String, dynamic>.from(hotel);
+    } else {
+      favoriteHotels.remove(hotelName);
+      favoriteHotelDetails.remove(hotelName);
+    }
+    favoriteVersion.value++;
+    debugPrint("Error toggling favorite: $e");
   }
 }
 
@@ -1938,21 +2017,10 @@ class _HomeContentState extends State<HomeContent> {
     ).format(value);
   }
 
-  void toggleFavorite(Map<String, dynamic> hotel) {
-    final hotelName = (hotel["name"] ?? "").toString();
-    if (hotelName.isEmpty) return;
-
-    setState(() {
-      if (favoriteHotels.contains(hotelName)) {
-        favoriteHotels.remove(hotelName);
-        favoriteHotelDetails.remove(hotelName);
-      } else {
-        favoriteHotels.add(hotelName);
-        favoriteHotelDetails[hotelName] = Map<String, dynamic>.from(hotel);
-      }
-
-      favoriteVersion.value++;
-      saveFavorites();
-    });
+  void toggleFavorite(Map<String, dynamic> hotel) async {
+    await toggleFavoriteAPI(hotel);
+    if (mounted) {
+      setState(() {});
+    }
   }
 }
