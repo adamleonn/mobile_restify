@@ -67,12 +67,7 @@ class _ReservationPageState extends State<ReservationPage> {
   String paymentMethod = "QRIS";
 
   int get roomPrice {
-    final rawPrice = widget.hotel["price"] ?? "Rp0";
-
-    return int.tryParse(
-          rawPrice.toString().replaceAll(RegExp(r'[^0-9]'), ''),
-        ) ??
-        0;
+    return parseRupiah(widget.hotel["price"]);
   }
 
   String formatCurrency(int value) {

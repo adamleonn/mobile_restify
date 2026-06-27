@@ -103,15 +103,8 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     final guest = widget.guest;
     final status = currentStatus;
 
-    final int roomPrice =
-        int.tryParse(
-          hotel["price"]
-              .toString()
-              .replaceAll("Rp", "")
-              .replaceAll(".", "")
-              .replaceAll(",", ""),
-        ) ??
-        0;
+    final int roomPrice = parseRupiah(hotel["price"]);
+
 
 
     /// =========================

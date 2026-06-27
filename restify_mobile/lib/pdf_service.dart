@@ -47,13 +47,9 @@ class PdfService {
     final int duration = nights <= 0 ? 1 : nights;
 
     // Parse room price (handles "Rp 500.000" or plain "500000")
-    final rawPrice = hotel['price']?.toString() ?? '0';
-    final cleanPrice = rawPrice
-        .replaceAll(RegExp(r'[Rp\s]'), '')
-        .replaceAll('.', '')
-        .replaceAll(',', '');
-    final int roomPrice  = int.tryParse(cleanPrice) ?? 0;
+    final int roomPrice  = parseRupiah(hotel['price']);
     final int subtotal   = roomPrice * duration;
+
     final int taxAndFee  = (subtotal * 0.1).round();
     final int grandTotal = subtotal + taxAndFee;
 
