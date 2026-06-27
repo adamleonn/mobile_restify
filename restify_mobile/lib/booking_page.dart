@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'config.dart';
+import 'currency_utils.dart' as utils;
 
 class BookingPage extends StatefulWidget {
   const BookingPage({super.key});
@@ -131,18 +132,7 @@ class BookingPageState extends State<BookingPage> {
   }
 
   String formatRupiah(dynamic value) {
-    final price = double.tryParse(value.toString()) ?? 0;
-    final parts = price.toStringAsFixed(0).split('');
-    final result = StringBuffer();
-
-    for (int i = 0; i < parts.length; i++) {
-      if (i > 0 && (parts.length - i) % 3 == 0) {
-        result.write('.');
-      }
-      result.write(parts[i]);
-    }
-
-    return "Rp ${result.toString()}";
+    return utils.formatRupiah(value);
   }
 
   @override

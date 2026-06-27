@@ -11,10 +11,10 @@ import 'chatbot_page.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'config.dart';
 import 'location_service.dart';
+import 'currency_utils.dart' as utils;
 
 Set<String> favoriteHotels = {};
 Map<String, Map<String, dynamic>> favoriteHotelDetails = {};
@@ -2008,13 +2008,7 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   String formatRupiah(dynamic price) {
-    final value = double.tryParse(price.toString()) ?? 0;
-
-    return NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-      decimalDigits: 0,
-    ).format(value);
+    return utils.formatRupiah(price);
   }
 
   void toggleFavorite(Map<String, dynamic> hotel) async {

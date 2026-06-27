@@ -3,6 +3,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'currency_utils.dart';
 
 class PdfService {
   // ─── Color Palette ───────────────────────────────────────────────
@@ -19,8 +20,7 @@ class PdfService {
  
   // ─── Format helpers ──────────────────────────────────────────────
   static String _formatRupiah(int value) {
-    final formatter = NumberFormat.decimalPattern('id_ID');
-    return 'Rp ${formatter.format(value)}';
+    return formatRupiah(value);
   }
  
   static String _formatDate(DateTime dt) {

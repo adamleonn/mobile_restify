@@ -7,6 +7,7 @@ import 'image_utils.dart';
 import 'map_page.dart';
 import 'config.dart';
 import 'location_service.dart';
+import 'currency_utils.dart';
 
 const String _detailBaseUrl = Config.baseUrl;
 
@@ -78,13 +79,7 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
   String formatPrice(dynamic price) {
     final val = double.tryParse(price.toString()) ?? 0;
     if (val == 0) return 'Hubungi hotel';
-    final parts = val.toStringAsFixed(0).split('');
-    final result = StringBuffer();
-    for (int i = 0; i < parts.length; i++) {
-      if (i > 0 && (parts.length - i) % 3 == 0) result.write('.');
-      result.write(parts[i]);
-    }
-    return 'Rp${result.toString()}';
+    return formatRupiah(val);
   }
 
   @override

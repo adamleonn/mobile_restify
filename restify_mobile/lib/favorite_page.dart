@@ -3,6 +3,7 @@ import 'detail_hotel_page.dart';
 import 'home_page.dart';
 import 'image_utils.dart';
 import 'location_service.dart';
+import 'currency_utils.dart';
 
 class FavoritePage extends StatefulWidget {
   const FavoritePage({super.key});
@@ -25,16 +26,7 @@ class _FavoritePageState extends State<FavoritePage> {
   String formatPrice(dynamic price) {
     final value = double.tryParse(price.toString()) ?? 0;
     if (value == 0) return 'Harga belum tersedia';
-
-    final parts = value.toStringAsFixed(0).split('');
-    final result = StringBuffer();
-
-    for (int i = 0; i < parts.length; i++) {
-      if (i > 0 && (parts.length - i) % 3 == 0) result.write('.');
-      result.write(parts[i]);
-    }
-
-    return 'Rp ${result.toString()}';
+    return formatRupiah(value);
   }
 
   void removeFavorite(Map<String, dynamic> hotel) async {

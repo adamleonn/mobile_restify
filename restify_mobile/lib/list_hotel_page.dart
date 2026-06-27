@@ -5,6 +5,7 @@ import 'detail_hotel_page.dart';
 import 'image_utils.dart';
 import 'config.dart';
 import 'location_service.dart';
+import 'currency_utils.dart';
 
 const String _baseUrl = Config.baseUrl;
 
@@ -120,13 +121,7 @@ class _ListHotelPageState extends State<ListHotelPage> {
 
   String formatPrice(double price) {
     if (price == 0) return 'Hubungi hotel';
-    final parts = price.toStringAsFixed(0).split('');
-    final result = StringBuffer();
-    for (int i = 0; i < parts.length; i++) {
-      if (i > 0 && (parts.length - i) % 3 == 0) result.write('.');
-      result.write(parts[i]);
-    }
-    return 'Rp${result.toString()}';
+    return formatRupiah(price);
   }
 
   @override

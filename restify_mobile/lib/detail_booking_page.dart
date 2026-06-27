@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'image_utils.dart';
 import 'pdf_service.dart';
 import 'config.dart';
+import 'currency_utils.dart';
 
 class BookingDetailPage extends StatefulWidget {
   final Map<String, dynamic> hotel;
@@ -112,12 +113,6 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         ) ??
         0;
 
-    String formatRupiah(int value) {
-      return "Rp${value.toString().replaceAllMapped(
-        RegExp(r'\B(?=(\d{3})+(?!\d))'),
-        (match) => '.',
-      )}";
-    }
 
     /// =========================
     /// STATUS STYLE

@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'config.dart';
 import 'image_utils.dart';
+import 'currency_utils.dart';
 
 const String _baseUrl = Config.baseUrl;
 
@@ -75,22 +76,7 @@ class _ReservationPageState extends State<ReservationPage> {
   }
 
   String formatCurrency(int value) {
-    final text = value.toString();
-
-    final buffer = StringBuffer();
-
-    int counter = 0;
-
-    for (int i = text.length - 1; i >= 0; i--) {
-      buffer.write(text[i]);
-      counter++;
-
-      if (counter % 3 == 0 && i != 0) {
-        buffer.write('.');
-      }
-    }
-
-    return "Rp${buffer.toString().split('').reversed.join()}";
+    return formatRupiah(value);
   }
 
   int get maxGuests {
@@ -332,7 +318,7 @@ class _ReservationPageState extends State<ReservationPage> {
   Widget build(BuildContext context) {
     final hotel = widget.hotel;
 
-    final String hotelPrice = hotel["price"] ?? "Rp0";
+    final String hotelPrice = formatRupiah(roomPrice);
 
     return Scaffold(
       backgroundColor: Colors.white,
